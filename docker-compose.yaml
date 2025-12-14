@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sidaroco
+      POSTGRES_PASSWORD: sidaroco
+      POSTGRES_DB: sidaroco_fleet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fleet-service:
+    build:
+      context: .
+      dockerfile: services/fleet-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/fleet-service/.env
+    environment:
+      DATABASE_URL: postgres://sidaroco:sidaroco@postgres:5432/sidaroco_fleet
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

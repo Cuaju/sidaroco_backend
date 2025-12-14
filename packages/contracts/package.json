@@ -1,0 +1,22 @@
+{
+  "name": "@sidaroco/contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/dist.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "zod": "^4.1.13"
+  }
+}

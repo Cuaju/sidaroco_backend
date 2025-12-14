@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Driver{
+  id Int @id @default(autoincrement())
+  name String
+  licenseNumber String @map("license_number") @unique
+  birdthDate DateTime @map("birth_date")
+  address String
+  status String
+  photoUrl String @map("photo_url")
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  @@map("drivers")
+}
+
+model Bus{
+  id Int @id @default(autoincrement())
+  name String
+  model String
+  vin String @unique
+  plateNumber String @map("plate_number") @unique
+  capacity Int
+  status String
+  photoUrl String @map("photo_url")
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+  routeId Int? @map("route_id")
+
+  @@map("buses")
+}
