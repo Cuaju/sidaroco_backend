@@ -1,8 +1,8 @@
-import express from "express";
+import "dotenv/config";
 import dotenv from "dotenv";
+import express from "express";
 import driverRoutes from "./routes/driver.routes";
 import busRoutes from "./routes/bus.routes";
-dotenv.config();
 
 const app = express();
 app.use(express.json());
