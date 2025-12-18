@@ -1,6 +1,9 @@
 packages:
-  - "services/*"
-  - "packages/*"
-  - "gateway"
+  - services/*
+  - packages/*
+  - gateway
 
 injectWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - bcrypt
