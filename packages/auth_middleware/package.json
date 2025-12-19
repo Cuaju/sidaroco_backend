@@ -1,0 +1,15 @@
+{
+  "name": "@sidaroco/auth_middleware",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  },
+  "dependencies": {
+    "@sidaroco/auth": "workspace:*"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0"
+}
