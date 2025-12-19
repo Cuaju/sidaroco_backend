@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Ticket {
+  id        Int      @id @default(autoincrement())
+  routeId   Int      @map("route_id")
+  userId    Int      @map("user_id")
+  price     Float
+  status    String   @default("ACTIVE")
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  @@map("tickets")
+}
