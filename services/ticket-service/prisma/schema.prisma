@@ -13,6 +13,9 @@ model Ticket {
   userId    Int      @map("user_id")
   price     Float
   status    String   @default("ACTIVE")
+
+  saleDate  DateTime @map("sale_date")
+
   createdAt DateTime @map("created_at") @default(now())
   updatedAt DateTime @map("updated_at") @updatedAt
 

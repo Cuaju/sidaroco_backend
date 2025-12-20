@@ -4,27 +4,19 @@ import prisma from "../db/prisma";
 export async function createTicket(
   data: Omit<Ticket, "id" | "createdAt" | "updatedAt">
 ): Promise<Ticket> {
-  return prisma.ticket.create({
-    data,
-  });
+  return prisma.ticket.create({ data });
 }
 
 export async function getTicketById(id: number): Promise<Ticket | null> {
-  return prisma.ticket.findUnique({
-    where: { id },
-  });
+  return prisma.ticket.findUnique({ where: { id } });
 }
 
 export async function getTicketsByUser(userId: number): Promise<Ticket[]> {
-  return prisma.ticket.findMany({
-    where: { userId },
-  });
+  return prisma.ticket.findMany({ where: { userId } });
 }
 
 export async function getTicketsByRoute(routeId: number): Promise<Ticket[]> {
-  return prisma.ticket.findMany({
-    where: { routeId },
-  });
+  return prisma.ticket.findMany({ where: { routeId } });
 }
 
 export async function getAllTickets(): Promise<Ticket[]> {
@@ -42,7 +34,5 @@ export async function updateTicket(
 }
 
 export async function deleteTicket(id: number): Promise<Ticket> {
-  return prisma.ticket.delete({
-    where: { id },
-  });
+  return prisma.ticket.delete({ where: { id } });
 }

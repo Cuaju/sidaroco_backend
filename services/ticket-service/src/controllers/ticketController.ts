@@ -3,13 +3,18 @@ import * as TicketService from "../services/ticketService";
 
 export async function createTicket(req: Request, res: Response) {
   try {
-    const { routeId, userId, price, status } = req.body;
+    const { routeId, userId, price, status, saleDate } = req.body;
+
+    if (!saleDate || isNaN(Date.parse(saleDate))) {
+      return res.status(400).json({ message: "Invalid saleDate" });
+    }
 
     const ticketData = {
-      routeId: parseInt(routeId),
-      userId: parseInt(userId),
-      price: parseFloat(price),
+      routeId: Number(routeId),
+      userId: Number(userId),
+      price: Number(price),
       status: status ?? "ACTIVE",
+      saleDate: new Date(saleDate),
     };
 
     const newTicket = await TicketService.createTicket(ticketData);
@@ -22,7 +27,7 @@ export async function createTicket(req: Request, res: Response) {
 
 export async function getTicketById(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = Number(req.params.id);
     const ticket = await TicketService.getTicketById(id);
 
     if (!ticket) {
@@ -38,7 +43,7 @@ export async function getTicketById(req: Request, res: Response) {
 
 export async function getTicketsByUser(req: Request, res: Response) {
   try {
-    const userId = parseInt(req.params.userId);
+    const userId = Number(req.params.userId);
     const tickets = await TicketService.getTicketsByUser(userId);
     res.json(tickets);
   } catch (error) {
@@ -49,7 +54,7 @@ export async function getTicketsByUser(req: Request, res: Response) {
 
 export async function getTicketsByRoute(req: Request, res: Response) {
   try {
-    const routeId = parseInt(req.params.routeId);
+    const routeId = Number(req.params.routeId);
     const tickets = await TicketService.getTicketsByRoute(routeId);
     res.json(tickets);
   } catch (error) {
@@ -70,13 +75,14 @@ export async function getAllTickets(req: Request, res: Response) {
 
 export async function updateTicket(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = Number(req.params.id);
 
-    const ticketData: any = {
-      routeId: req.body.routeId ? parseInt(req.body.routeId) : undefined,
-      userId: req.body.userId ? parseInt(req.body.userId) : undefined,
-      price: req.body.price ? parseFloat(req.body.price) : undefined,
+    const ticketData = {
+      routeId: req.body.routeId ? Number(req.body.routeId) : undefined,
+      userId: req.body.userId ? Number(req.body.userId) : undefined,
+      price: req.body.price ? Number(req.body.price) : undefined,
       status: req.body.status,
+      saleDate: req.body.saleDate ? new Date(req.body.saleDate) : undefined,
     };
 
     const updatedTicket = await TicketService.updateTicket(id, ticketData);
@@ -89,7 +95,7 @@ export async function updateTicket(req: Request, res: Response) {
 
 export async function deleteTicket(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = Number(req.params.id);
     await TicketService.deleteTicket(id);
     res.status(204).send();
   } catch (error) {
