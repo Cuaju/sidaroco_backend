@@ -19,8 +19,8 @@ declare module "@sidaroco/auth/claimTypes" {
   export = ClaimTypes;
 }
 
-
 export {};
+
 declare global {
   namespace Express {
     interface Request {

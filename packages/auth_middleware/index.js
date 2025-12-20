@@ -1,4 +1,1 @@
-module.exports = {
-    Authorize: require('./authMiddleware').Authorize
-}
-
+module.exports = require("./authMiddleware");

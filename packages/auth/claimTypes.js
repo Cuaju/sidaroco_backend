@@ -1,6 +1,6 @@
-module.exports = {
-    NameIdentifier: 'user_id',
-    Email: 'email',
-    Role: 'role',
-    GivenName : 'username'
-}
+module.exports = Object.freeze({
+  NameIdentifier: "user_id",
+  Name: "email",
+  GivenName: "username",
+  Role: "role"
+});

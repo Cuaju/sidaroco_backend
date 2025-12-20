@@ -1,4 +1,4 @@
-modules.exports = Object.freeze({
+module.exports = Object.freeze({
   CASHIER: 'Cashier',
   USER: 'Customer',
   ROUTES_MANAGER: 'RouteManager',
