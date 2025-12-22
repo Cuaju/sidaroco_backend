@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.24.0"
+  "packageManager": "pnpm@10.24.0",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3"
+  }
 }

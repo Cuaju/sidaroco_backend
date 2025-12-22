@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {
-    "@sidaroco/auth": "workspace:*"
+    "@sidaroco/auth": "workspace:*",
+    "jsonwebtoken": "^9.0.3"
   },
   "keywords": [],
   "author": "",

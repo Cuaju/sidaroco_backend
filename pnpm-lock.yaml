@@ -9,13 +9,20 @@ importers:
 
   .: {}
 
-  packages/auth: {}
+  packages/auth:
+    dependencies:
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
 
   packages/auth_middleware:
     dependencies:
       '@sidaroco/auth':
         specifier: workspace:*
         version: link:../auth
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
 
   packages/contracts:
     dependencies:
@@ -244,6 +251,58 @@ importers:
       '@types/node':
         specifier: ^25.0.0
         version: 25.0.0
+      ts-node-dev:
+        specifier: ^2.0.0
+        version: 2.0.0(@types/node@25.0.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  services/users-service:
+    dependencies:
+      '@prisma/adapter-pg':
+        specifier: ^7.1.0
+        version: 7.1.0
+      '@prisma/client':
+        specifier: ^7.1.0
+        version: 7.1.0(prisma@7.1.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3))(typescript@5.9.3)
+      '@sidaroco/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@sidaroco/auth_middleware':
+        specifier: workspace:*
+        version: link:../../packages/auth_middleware
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
+      prisma:
+        specifier: ^7.1.0
+        version: 7.1.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
+      '@types/node':
+        specifier: ^25.0.0
+        version: 25.0.0
+      '@types/pg':
+        specifier: ^8.16.0
+        version: 8.16.0
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@25.0.0)(typescript@5.9.3)

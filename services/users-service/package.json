@@ -1,8 +1,8 @@
 {
-  "name": "authenticationService",
+  "name": "users-service",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --files --project ./tsconfig.json src/index.ts",
     "build": "tsc",
@@ -25,12 +25,10 @@
     "prisma": "^7.1.0"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.0",
     "@types/pg": "^8.16.0",
-    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
