@@ -4,8 +4,6 @@ const { generateToken } = require("@sidaroco/auth") as {
   generateToken: (args: { id: string; email: string; username: string; role: string }) => string;
 };
 import { Prisma, UserType } from "@prisma/client";
-import { emit } from "node:cluster";
-import { error } from "node:console";
 
 export async function loginWithEmail(email: string, password: string) {
   const account = await prisma.account.findUnique({
@@ -51,10 +49,10 @@ export async function createAccount(_email:string, _username:string, _passwordHa
 
     return {id: (await account).id};
   }
-  catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { error: "DUPLICATE EMAIL OR USERNAME" as const };
-    }
+  catch (e: any) {
+  if (e?.code === "P2002") {
+    return { error: "DUPLICATE EMAIL OR USERNAME" as const };
+  }
     throw e;
   }
 }

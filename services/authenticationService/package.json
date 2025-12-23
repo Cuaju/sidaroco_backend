@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --files --project ./tsconfig.json src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "dev": "ts-node-dev --respawn --files src/index.ts",
+    "prisma:generate": "pnpm dlx prisma generate --schema prisma/schema.prisma",
+    "build": "pnpm run prisma:generate && tsc",
+    "start": "pnpm run prisma:generate && node dist/index.js",
+    "seed": "ts-node --files src/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +19,9 @@
     "@prisma/client": "^7.1.0",
     "@sidaroco/auth": "workspace:*",
     "@sidaroco/auth_middleware": "workspace:*",
+    "@types/cors": "^2.8.19",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
