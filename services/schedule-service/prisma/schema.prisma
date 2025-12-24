@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum TripStatus{
+  scheduled
+  canceled
+  completed
+}
+
+model DailySchedule{
+  id Int @id @default(autoincrement())
+  serviceDate DateTime @unique @db.Date
+  duplicatedFrom DateTime? @db.Date
+  isLocked Boolean @default(false)
+
+  trips ScheduledTrip[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("daily_schedules")
+}
+
+model ScheduledTrip{
+  id Int @id @default(autoincrement())
+  dailyScheduleId Int
+  routeId Int
+  busId Int
+  driverId Int
+
+  departureTime DateTime @db.Time
+  //arrivalTime default null
+
+  status TripStatus @default(scheduled)
+
+  dailySchedule DailySchedule @relation(fields: [dailyScheduleId], references: [id], onDelete: Cascade)  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dailyScheduleId])
+  @@index([routeId])
+  @@index([busId])
+  @@index([driverId])
+
+
+  @@map("scheduled_trips")
+}
