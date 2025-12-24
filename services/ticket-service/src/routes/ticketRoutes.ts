@@ -10,5 +10,8 @@ router.get("/user/:userId", TicketController.getTicketsByUser);
 router.get("/route/:routeId", TicketController.getTicketsByRoute);
 router.put("/:id", TicketController.updateTicket);
 router.delete("/:id", TicketController.deleteTicket);
+router.options("/user/:userId", (_req, res) => {
+  res.sendStatus(204);
+});
 
 export default router;
