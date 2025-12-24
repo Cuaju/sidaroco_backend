@@ -1,9 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
+  prisma?: PrismaClient;
 };
 
 const adapter = new PrismaPg({
@@ -11,7 +10,7 @@ const adapter = new PrismaPg({
 });
 
 const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma ??
   new PrismaClient({
     adapter,
   });
