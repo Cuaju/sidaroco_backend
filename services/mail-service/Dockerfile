@@ -25,7 +25,7 @@
     COPY --from=build /prod/mail-service ./
     
     ENV NODE_ENV=production
-    EXPOSE 3001
+    EXPOSE 3002
     
     CMD ["node", "dist/index.js"]
     

@@ -9,7 +9,7 @@ app.use(express.json());
 app.use("/tickets", ticketRoutes);
 app.use("/reports", reportRoutes);
 
-const PORT = process.env.TICKET_SERVICE_PORT || 3001;
+const PORT = process.env.TICKET_SERVICE_PORT || 3004;
 
 app.listen(PORT, () =>
   console.log(`Ticket Service running on port ${PORT}`)

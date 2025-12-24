@@ -29,5 +29,5 @@ WORKDIR /app
 COPY --from=build /prod/ticket-service ./
 
 ENV NODE_ENV=production
-EXPOSE 3001
+EXPOSE 3004
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]

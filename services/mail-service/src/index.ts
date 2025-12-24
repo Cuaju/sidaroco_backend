@@ -7,7 +7,7 @@ app.use(express.json())
 
 app.use('/mail', mailRoutes)
 
-const port = process.env.PORT || 3001
+const port = process.env.PORT || 3002
 app.listen(port, () => {
   console.log(`corriendo en ${port}`)
 })

@@ -5,11 +5,26 @@ services:
     environment:
       POSTGRES_USER: sidaroco
       POSTGRES_PASSWORD: sidaroco
-      POSTGRES_DB: sidaroco_fleet
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  
+  authentication-service:
+    build:
+      context: .
+      dockerfile: services/authenticationService/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/authenticationService/.env
+    environment:
+      AUTH_SERVICE_PORT: 3000
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/auth_db?schema=public
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
 
   fleet-service:
     build:
@@ -19,11 +34,74 @@ services:
     env_file:
       - ./services/fleet-service/.env
     environment:
-      DATABASE_URL: postgres://sidaroco:sidaroco@postgres:5432/sidaroco_fleet
+      FLEET_SERVICE_PORT: 3001    
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_fleet
+      AUTH_SERVICE_URL: http://authentication-service:3000
     depends_on:
       - postgres
     ports:
-      - "3000:3000"
+      - "3001:3001"
+
+  mail-service:
+    build:
+      context: .
+      dockerfile: services/mail-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/mail-service/.env
+    environment:
+      MAIL_SERVICE_PORT: 3002
+    ports:
+      - "3002:3002"
+
+  route-service:
+    build:
+      context: .
+      dockerfile: services/route-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/route-service/.env
+    environment:
+      ROUTE_SERVICE_PORT: 3003
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_route
+      AUTH_SERVICE_URL: http://authentication-service:3000
+    depends_on:
+      - postgres
+    ports:
+      - "3003:3003"
+
+  ticket-service:
+    build:
+      context: .
+      dockerfile: services/ticket-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/ticket-service/.env
+    environment:
+      TICKET_SERVICE_PORT: 3004
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_ticket
+      AUTH_SERVICE_URL: http://authentication-service:3000
+    depends_on:
+      - postgres
+    ports:
+      - "3004:3004"
+
+  users-service:
+    build:
+      context: .
+      dockerfile: services/users-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/users-service/.env
+    environment:
+      USERS_SERVICE_PORT: 3005
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/users_db?schema=public
+      AUTH_SERVICE_URL: http://authentication-service:3000
+    depends_on:
+      - postgres
+      - authentication-service
+    ports:
+      - "3005:3005"
 
 volumes:
   postgres_data:

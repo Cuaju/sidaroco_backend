@@ -25,6 +25,6 @@
     COPY --from=build /prod/route-service ./
     
     ENV NODE_ENV=production
-    EXPOSE 3000
+    EXPOSE 3003
     CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
     
