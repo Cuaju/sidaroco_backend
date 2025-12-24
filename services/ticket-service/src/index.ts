@@ -2,8 +2,17 @@ import "dotenv/config";
 import express from "express";
 import ticketRoutes from "./routes/ticketRoutes";
 import reportRoutes from "./routes/reportRoutes";
+import cors from "cors";
 
 const app = express();
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
 app.use("/tickets", ticketRoutes);
