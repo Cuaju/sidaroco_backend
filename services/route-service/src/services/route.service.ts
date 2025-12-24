@@ -19,7 +19,7 @@ export class RouteService {
     });
   }
 
-  static async getById(id: string) {
+  static async getById(id: number) {
     return prisma.route.findUnique({
       where: { id },
       include: { origin: true, destination: true },
@@ -67,7 +67,7 @@ export class RouteService {
     });
   }
 
-  static async remove(id: string) {
+  static async remove(id: number) {
     return prisma.route.delete({ where: { id } });
   }
 }

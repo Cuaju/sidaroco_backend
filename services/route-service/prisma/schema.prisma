@@ -6,33 +6,30 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-
 model Route {
-  id             String   @id @default(cuid())
-  name           String
+  id            Int      @id @default(autoincrement())
+  name          String
 
-  originId       String
-  destinationId  String
+  originId      Int
+  destinationId Int
 
-  origin         Location @relation("RouteOrigin", fields: [originId], references: [id])
-  destination    Location @relation("RouteDestination", fields: [destinationId], references: [id])
+  origin        Location @relation("RouteOrigin", fields: [originId], references: [id])
+  destination   Location @relation("RouteDestination", fields: [destinationId], references: [id])
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  @@index([originId])
-  @@index([destinationId])
+  @@unique([originId, destinationId], name: "route_origin_destination_unique")
 }
 
 model Location {
-  id             String  @id @default(cuid())
+  id             Int      @id @default(autoincrement())
   name           String
   lat            Float
   lng            Float

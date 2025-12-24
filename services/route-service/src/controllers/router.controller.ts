@@ -19,7 +19,13 @@ export class RouteController {
 
   static async getById(req: Request, res: Response) {
     try {
-      const route = await RouteService.getById(req.params.id);
+      const id = Number(req.params.id);
+
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: "invalid id" });
+      }
+      
+      const route = await RouteService.getById(id);
       if (!route) return res.status(404).json({ message: "not found" });
       return res.json(route);
     } catch (e: any) {
@@ -45,6 +51,12 @@ export class RouteController {
       return res.status(201).json(created);
     } catch (e: any) {
       console.error(e);
+      if (e?.code === "P2002") {
+        return res.status(409).json({
+          message: "route already exists (same origin and destination)",
+        });
+      }
+      return res.status(500).json({ message: "internal error", detail: e?.message });
       return res.status(500).json({ message: "internal error", detail: e?.message });
       
     }
@@ -52,7 +64,15 @@ export class RouteController {
 
   static async remove(req: Request, res: Response) {
     try {
-      await RouteService.remove(req.params.id);
+      const id = Number(req.params.id);
+
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: "invalid id" });
+      }
+      
+      await RouteService.remove(id);
+      return res.status(204).send();
+      
       return res.status(204).send();
     } catch (e: any) {
       if (String(e?.code) === "P2025") return res.status(404).json({ message: "not found" });
