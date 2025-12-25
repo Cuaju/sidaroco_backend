@@ -1,6 +1,9 @@
 import nodemailer from 'nodemailer'
+import path from "path";
 import { renderTemplate } from '../utils/template.utils'
 
+
+const logoPath = path.resolve(process.cwd(), "src", "assets", "Sidaroco.png");
 interface SendMailDto {
   to: string
   subject: string
@@ -20,13 +23,24 @@ export class MailService {
   })
 
   async sendMail(data: SendMailDto) {
-    const html = renderTemplate(data.template, data.context)
-
+    const html = renderTemplate(data.template, {
+      ...data.context,
+      logoCid: "sidaroco-logo",
+    });
+    
     await this.transporter.sendMail({
       from: `"Sidaroco" <${process.env.SMTP_FROM}>`,
       to: data.to,
       subject: data.subject,
-      html
+      html,
+      attachments: [
+        {
+          filename: "logo.png",
+          // put your real path here:
+          path: logoPath,
+          cid: "sidaroco-logo", // <- referenced in the template as cid:sidaroco-logo
+        },
+      ],
     })
   }
 }

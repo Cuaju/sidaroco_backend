@@ -2,6 +2,7 @@ type CreateAccountReq = { email: string; username: string; password: string };
 type CreateAccountRes = { accountId: string };
 
 
+
 //this shi is for the microservice orchesstation so yeah
 export async function authCreateAccount(payload: CreateAccountReq): Promise<CreateAccountRes> {
   const baseUrl = process.env.AUTH_SERVICE_URL;
@@ -48,6 +49,26 @@ export async function authPatchAccount(
   }
 
   return r.json();
+}
+
+export async function authCreateAccountHashed(payload: {
+  email: string;
+  username: string;
+  passwordHash: string;
+}) {
+  const res = await fetch(`${process.env.AUTH_SERVICE_URL}/api/internal/newAccountHashed`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      newEmail: payload.email,
+      newUsername: payload.username,
+      passwordHash: payload.passwordHash
+    })
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || "auth create account failed");
+  return data; // { accountId }
 }
 
 export async function authPatchPassword(

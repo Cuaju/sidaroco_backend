@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{appName}} - Codigo de verificacion</title>
+  </head>
+
+  <body style="margin:0; padding:0; background:#0b2a26;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
+      Tu codigo de verificacion es {{code}}. Expira en {{expiresMinutes}} minutos.
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+      style="background:#0b2a26; padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;">
+            
+            <tr>
+              <td align="center" style="padding:10px 0 18px;">
+                {{#if logoUrl}}
+                <img src="cid:sidarocoLogo" alt="Sidaroco" style="height:64px;" />
+
+                {{else}}
+                  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+                              color:#f7f0df; font-weight:900; letter-spacing:.06em; font-size:18px;">
+                    {{appName}}
+                  </div>
+                {{/if}}
+              </td>
+            </tr>
+
+            <!-- Card -->
+            <tr>
+              <td style="background:#f7f0df; border-radius:18px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,.35);">
+                
+                <!-- Accent bar -->
+                <div style="height:8px; background:linear-gradient(90deg,#2b946b,#ddb947);"></div>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="padding:26px 22px 18px;">
+                  <tr>
+                    <td style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:#023531;">
+                      
+                      <h1 style="margin:0 0 6px; font-size:22px; line-height:1.2;">
+                        Verifica tu correo
+                      </h1>
+
+                      <p style="margin:0 0 16px; font-size:14px; line-height:1.6; color:#0f3a35;">
+                        Hola{{#if username}} <b>{{username}}</b>{{/if}}, usa este codigo para completar tu registro en {{appName}}:
+                      </p>
+
+                      <!-- Code box -->
+                      <div style="background:#ffffff; border:1px solid rgba(2,53,49,.18); border-radius:14px; padding:16px; text-align:center;">
+                        <div style="font-size:12px; letter-spacing:.10em; text-transform:uppercase; color:#2b946b; font-weight:800;">
+                          Codigo de verificacion
+                        </div>
+
+                        <div style="font-size:34px; letter-spacing:.22em; font-weight:900; color:#023531; margin-top:8px;">
+                          {{code}}
+                        </div>
+
+                        <div style="margin-top:10px; font-size:12px; color:#2c4a46;">
+                          Expira en <b>{{expiresMinutes}}</b> minutos
+                        </div>
+                      </div>
+
+                      <p style="margin:16px 0 0; font-size:13px; line-height:1.6; color:#0f3a35;">
+                        Si tu no solicitaste este codigo, ignora este correo.
+                      </p>
+
+                      <div style="height:1px; background:rgba(2,53,49,.12); margin:18px 0;"></div>
+
+                      <p style="margin:0; font-size:12px; line-height:1.6; color:#2c4a46;">
+                        Soporte:
+                        <a href="mailto:{{supportEmail}}" style="color:#2b946b; text-decoration:none; font-weight:800;">
+                          {{supportEmail}}
+                        </a>
+                      </p>
+
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="padding:16px 10px 0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:#b8c9c6;">
+                <p style="margin:0; font-size:12px; line-height:1.6;">
+                  © {{year}} {{appName}}. Todos los derechos reservados.
+                </p>

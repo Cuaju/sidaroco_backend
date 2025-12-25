@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createNewAccount,updateAccount, updatePassword } from "../controllers/internalAuthController";
+import { createNewAccount, createNewAccountHashed,updateAccount, updatePassword } from "../controllers/internalAuthController";
 import { allowSelfOrRoles } from "../middlewares/rolesVerifier";
 
 const { Authorize } = require("@sidaroco/auth_middleware");
@@ -13,3 +13,5 @@ internalRouter.patch(
 
 internalRouter.patch(
   "/accounts/:id/password",Authorize(),allowSelfOrRoles(["RouteManager", "FinanceManager"]),updatePassword);
+
+internalRouter.post("/internal/newAccountHashed", createNewAccountHashed);
