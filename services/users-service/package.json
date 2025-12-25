@@ -17,7 +17,9 @@
     "@prisma/client": "^7.1.0",
     "@sidaroco/auth": "workspace:*",
     "@sidaroco/auth_middleware": "workspace:*",
+    "@types/cors": "^2.8.19",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
@@ -25,6 +27,7 @@
     "prisma": "^7.1.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.0",

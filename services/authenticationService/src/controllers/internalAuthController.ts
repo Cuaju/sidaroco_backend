@@ -18,6 +18,42 @@ function isAllowedUserType(user: unknown): user is AllowedUserType {
   return typeof user === "string" && (allowedUserTypes as readonly string[]).includes(user);
 }
 
+export async function createNewAccountHashed(req: Request, res: Response) {
+  const { newEmail, newUsername, passwordHash } = req.body as {
+    newEmail?: string;
+    newUsername?: string;
+    passwordHash?: string;
+  };
+
+  if (!newEmail || !isNonEmpty(newEmail) || !isValidEmail(newEmail)){
+    return res.status(400).json({ message: "invalid email" });
+  }
+  
+  if (!newUsername || !isNonEmpty(newUsername)){
+    return res.status(400).json({ message: "invalid username" });
+  }
+
+  if (!passwordHash || !isNonEmpty(passwordHash)){
+    return res.status(400).json({ message: "passwordHash required" });
+  }
+
+  try {
+    
+    const account = await createAccount(newEmail, newUsername, passwordHash);
+
+    return res.status(201).json({ accountId: account.id });
+  } 
+  catch (e: any) {
+    
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return res.status(409).json({ message: "email or username already in use" });
+    }
+
+    return res.status(500).json({ message: "internal error" });
+  }
+}
+
+
 //POST /internal/newAccount
 export async function createNewAccount(req: Request, res:Response) {
   const {newEmail, newUsername, newPassword } = req.body as {

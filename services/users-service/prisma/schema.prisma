@@ -17,3 +17,20 @@ model UserProfile {
 
   @@map("user_profiles")
 }
+
+model EmailVerification {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String
+  passwordHash String   // hash de la password (bcrypt)
+  codeHash     String   // hash del codigo de 6 digitos (bcrypt o sha256)
+  expiresAt    DateTime
+  attempts     Int      @default(0)
+  verifiedAt   DateTime?
+  accountId    String?  // se llena cuando ya creas la cuenta en auth-service
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("email_verifications")
+}

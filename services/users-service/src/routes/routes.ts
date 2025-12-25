@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, createProfileForExistingAccount, getMe, patchMe, changeMyPassword } from "../controllers/usersController";
+import { requestRegisterCode,verifyRegisterCode,register, createProfileForExistingAccount, getMe, patchMe, changeMyPassword } from "../controllers/usersController";
 
 const { Authorize } = require("@sidaroco/auth_middleware");
 
@@ -11,3 +11,5 @@ usersRouter.post("/profile", createProfileForExistingAccount);
 usersRouter.get("/me", Authorize(), getMe);
 usersRouter.patch("/me", Authorize(), patchMe);
 usersRouter.patch("/me/password", Authorize(), changeMyPassword);
+usersRouter.post("/register/request", requestRegisterCode);
+usersRouter.post("/register/verify", verifyRegisterCode);

@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
-import { authCreateAccount, authPatchAccount, authPatchPassword } from "../utils/authClient";
+import { authCreateAccount, authPatchAccount, authPatchPassword} from "../utils/authClient";
 import { createProfile, getProfileByAccountId, updateProfileByAccountId } from "../services/usersService";
+import { requestCode, verifyCodeAndCreateAccount } from "../services/emailTokenService";
+
 
 function isNonEmpty(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0;
@@ -85,6 +87,7 @@ export async function createProfileForExistingAccount(req: Request, res: Respons
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
             return res.status(409).json({ message: "profile already exists for this accountId" });
         }
+
         return res.status(500).json({ message: "internal error creating profile" });
     }
 }
@@ -119,6 +122,7 @@ export async function patchMe(req: Request, res: Response) {
         return res.status(400).json({ message: "invalid fullName" });
     }
     profilePatch.fullName = fullName.trim();
+
   }
   if (phoneNumber !== undefined) {
     if (phoneNumber !== null && typeof phoneNumber !== "string"){
@@ -165,7 +169,9 @@ export async function changeMyPassword(req: Request, res: Response) {
     const accountId = req.user?.id;
     const authHeader = req.headers.authorization;
 
-    if (!accountId || !authHeader) return res.status(401).json({ message: "unauthorized" });
+    if (!accountId || !authHeader){
+        return res.status(401).json({ message: "unauthorized" });
+    }
 
     const { currentPassword, newPassword } = req.body as { 
         currentPassword?: string;
@@ -187,4 +193,64 @@ export async function changeMyPassword(req: Request, res: Response) {
     catch (e: any) {
         return res.status(400).json({ message: String(e.message ?? e) });
     }
+}
+
+export async function requestRegisterCode(req: Request, res: Response) {
+    const { email, username, password, verifyPassword } = req.body as {
+        email?: string;
+        username?: string;
+        password?: string;
+        verifyPassword?: string;
+    };
+
+    if (!email || !isNonEmpty(email) || !isValidEmail(email)){
+        return res.status(400).json({ message: "invalid email" });
+    }
+
+    if (!username || !isNonEmpty(username) || username.trim().length < 3){
+        return res.status(400).json({ message: "invalid username" });   
+    }
+    
+    if (!password || !isNonEmpty(password) || password.length < 6){
+        return res.status(400).json({ message: "invalid password (min 6)" });
+    }
+
+    if (verifyPassword !== password){
+        return res.status(400).json({ message: "passwords do not match" });
+    }
+    try {
+
+    await requestCode(email.trim().toLowerCase(), username.trim(), password);
+    
+    return res.status(200).json({ ok: true });
+  
+    } 
+    catch (e: any) {
+    return res.status(400).json({ message: e.message || "could not send code" });
+  }
+}
+
+
+export async function verifyRegisterCode(req: Request, res: Response) {
+console.log("verify body:", req.body);
+
+    const { email, code } = req.body as {
+        email?: string; 
+        code?: string 
+    };
+
+    if (!email || !isNonEmpty(email) || !isValidEmail(email)){
+        return res.status(400).json({ message: "invalid email" });
+    }
+  
+    if (!code || !isNonEmpty(code) || code.trim().length !== 6){
+        return res.status(400).json({ message: "invalid code" });
+    }
+    try {
+        const out = await verifyCodeAndCreateAccount(email.trim().toLowerCase(), code.trim());
+        return res.status(200).json(out); // { accountId }
+    } 
+    catch (e: any) {
+        return res.status(400).json({ message: e.message || "verify failed" });
+  }
 }
