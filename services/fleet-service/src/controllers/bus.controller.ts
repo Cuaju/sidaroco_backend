@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { uploadToS3 } from "../utils/s3";
 import * as BusService from "../services/bus.service";
 
-export async function createDriver(req: Request, res: Response) {
+export async function createBus(req: Request, res: Response) {
   try {
     let photoUrl: string = "";
     let routeID: number = 0;
