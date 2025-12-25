@@ -27,7 +27,7 @@ const locations: LocationSeed[] = [
 ];
 
 async function main() {
-  const locMap: Record<string, string> = {};
+  const locMap: Record<string, number> = {};
 
   for (const loc of locations) {
     const created = await prisma.location.upsert({
@@ -49,19 +49,15 @@ async function main() {
     locMap[loc.key] = created.id;
   }
 
-  const routes: Array<{ from: string; to: string }> = [];
   const hubs = ["xalapa", "veracruz"];
   const allCities = locations.map(l => l.key);
+
+  const routes: Array<{ from: string; to: string }> = [];
 
   for (const hub of hubs) {
     for (const city of allCities) {
       if (hub !== city) routes.push({ from: hub, to: city });
-    }
-  }
-
-  for (const city of allCities) {
-    for (const hub of hubs) {
-      if (city !== hub) routes.push({ from: city, to: hub });
+      if (hub !== city) routes.push({ from: city, to: hub });
     }
   }
 
@@ -77,19 +73,19 @@ async function main() {
   ];
 
   for (const [a, b] of bidirectional) {
-    routes.push({ from: a, to: b });
-    routes.push({ from: b, to: a });
+    routes.push({ from: a, to: b }, { from: b, to: a });
   }
 
-  const seen = new Set<string>();
-
   for (const r of routes) {
-    const key = `${r.from}-${r.to}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    await prisma.route.create({
-      data: {
+    await prisma.route.upsert({
+      where: {
+        route_origin_destination_unique: {
+          originId: locMap[r.from],
+          destinationId: locMap[r.to],
+        },
+      },
+      update: {},
+      create: {
         name: `${locations.find(l => l.key === r.from)!.name} → ${locations.find(l => l.key === r.to)!.name}`,
         originId: locMap[r.from],
         destinationId: locMap[r.to],
@@ -97,14 +93,8 @@ async function main() {
     });
   }
 
-  console.log("✅ Route seed done.");
+  console.log("Route seed done.");
 }
 
 main()
-  .catch(e => {
-    console.error("❌ Route seed failed:", e);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(async () => prisma.$disconnect());
