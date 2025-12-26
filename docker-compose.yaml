@@ -20,11 +20,16 @@ services:
       - ./services/authenticationService/.env
     environment:
       AUTH_SERVICE_PORT: 3000
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/auth_db?schema=public
     depends_on:
       - postgres
     ports:
       - "3000:3000"
+    volumes:
+      - ./packages/keys:/keys:ro
+
 
   fleet-service:
     build:
@@ -42,23 +47,7 @@ services:
     ports:
       - "3001:3001"
 
-  schedule-service:
-    build:
-      context: .
-      dockerfile: services/schedule-service/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ./services/schedule-service/.env
-    environment:
-      SCHEDULE_SERVICE_PORT: 3006
-      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_schedule
-      AUTH_SERVICE_URL: http://authentication-service:3000
-      ROUTE_SERVICE_URL: http://route-service:3003
-      FLEET_SERVICE_URL: http://fleet-service:3001
-    depends_on:
-      - postgres
-    ports:
-      - "3006:3006"
+
   mail-service:
     build:
       context: .
@@ -111,6 +100,8 @@ services:
     env_file:
       - ./services/users-service/.env
     environment:
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       USERS_SERVICE_PORT: 3005
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/users_db?schema=public
       AUTH_SERVICE_URL: http://authentication-service:3000
@@ -119,8 +110,26 @@ services:
       - authentication-service
     ports:
       - "3005:3005"
+    volumes: 
+      - ./packages/keys:/keys:ro
   
-
+  schedule-service:
+    build:
+      context: .
+      dockerfile: services/schedule-service/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./services/schedule-service/.env
+    environment:
+      SCHEDULE_SERVICE_PORT: 3006
+      DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_schedule
+      AUTH_SERVICE_URL: http://authentication-service:3000
+      ROUTE_SERVICE_URL: http://route-service:3003
+      FLEET_SERVICE_URL: http://fleet-service:3001
+    depends_on:
+      - postgres
+    ports:
+      - "3006:3006"
 
     
 

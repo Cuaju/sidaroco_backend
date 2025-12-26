@@ -1,6 +1,4 @@
-import { PrismaClient } from "../generated/prisma";
-
-const prisma = new PrismaClient();
+import prisma from "../db/prisma";
 
 export type LocationInput = { name: string; lat: number; lng: number };
 export type CreateRouteInput = {

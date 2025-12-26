@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { Prisma } from "@prisma/client";
-import { authCreateAccount, authPatchAccount, authPatchPassword} from "../utils/authClient";
+import { Prisma } from "../generated/prisma/client";
+import { authCreateAccount, authPatchAccount, authPatchPassword } from "../utils/authClient";
 import { createProfile, getProfileByAccountId, updateProfileByAccountId } from "../services/usersService";
 import { requestCode, verifyCodeAndCreateAccount } from "../services/emailTokenService";
 

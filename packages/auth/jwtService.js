@@ -3,15 +3,23 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const ClaimTypes = require('./claimTypes');
 
-const PRIVATE_KEY = fs.readFileSync(
-  path.join(__dirname, '../keys/private.key'),
-  'utf8'
-);
+const PRIVATE_KEY =
+  process.env.JWT_PRIVATE_KEY ??
+  (process.env.JWT_PRIVATE_KEY_PATH
+    ? require('fs').readFileSync(process.env.JWT_PRIVATE_KEY_PATH, 'utf8')
+    : null);
 
-const PUBLIC_KEY = fs.readFileSync(
-  path.join(__dirname, '../keys/public.key'),
-  'utf8'
-);
+const PUBLIC_KEY =
+  process.env.JWT_PUBLIC_KEY ??
+  (process.env.JWT_PUBLIC_KEY_PATH
+    ? require('fs').readFileSync(process.env.JWT_PUBLIC_KEY_PATH, 'utf8')
+    : null);
+
+if (!PRIVATE_KEY || !PUBLIC_KEY) {
+  throw new Error(
+    '[auth] Missing JWT keys. Set JWT_PRIVATE_KEY / JWT_PUBLIC_KEY or *_PATH env vars.'
+  );
+}
 
 //Esta madre namas es para el auth service
 function generateToken({ id, email, username, role }) {
