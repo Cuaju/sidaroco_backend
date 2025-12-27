@@ -3,54 +3,82 @@ import prisma from "./db/prisma";
 
 async function main() {
   const userId = 1;
-
   const now = new Date();
 
   const pastTripDate = new Date(now);
-  pastTripDate.setDate(now.getDate() - 5); // 3 días atrás
+  pastTripDate.setDate(now.getDate() - 5);
 
   const upcomingTripDate = new Date(now);
-  upcomingTripDate.setDate(now.getDate() + 5); // 5 días adelante
+  upcomingTripDate.setDate(now.getDate() + 5);
 
-  const tickets = [
+  const trips = [
     {
-      routeId: 101,
-      userId,
-      price: 450.0,
-      status: "ACTIVE",
-      saleDate: pastTripDate,
+      routeId: 1,
+      departureTime: pastTripDate,
+      status: "COMPLETED",
     },
     {
-      routeId: 202,
-      userId,
-      price: 620.0,
-      status: "ACTIVE",
-      saleDate: upcomingTripDate,
+      routeId: 2,
+      departureTime: upcomingTripDate,
+      status: "SCHEDULED",
     },
   ];
 
-  for (const t of tickets) {
-    const created = await prisma.ticket.create({
-      data: t,
+  const createdTrips = [];
+
+  for (const trip of trips) {
+    const createdTrip = await prisma.trip.create({
+      data: trip,
       select: {
         id: true,
         routeId: true,
+        departureTime: true,
+      },
+    });
+    createdTrips.push(createdTrip);
+  }
+
+  const tickets = [
+    {
+      tripId: createdTrips[0].id,
+      userId,
+      seatNumber: 6,
+      price: 450.0,
+      status: "ACTIVE",
+      saleDate: createdTrips[0].departureTime,
+    },
+    {
+      tripId: createdTrips[1].id,
+      userId,
+      seatNumber: 22,
+      price: 620.0,
+      status: "ACTIVE",
+      saleDate: createdTrips[1].departureTime,
+    },
+  ];
+
+  for (const ticket of tickets) {
+    const createdTicket = await prisma.ticket.create({
+      data: ticket,
+      select: {
+        id: true,
+        tripId: true,
         userId: true,
+        seatNumber: true,
         price: true,
         saleDate: true,
         status: true,
       },
     });
-
-    console.log("Seeded ticket:", created);
+    console.log("Seeded ticket:", createdTicket);
   }
 
-  console.log("\n✅ Ticket seed done for userId = 1");
+  console.log("Seed completed");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Ticket seed failed:", e);
+    console.error(e);
     process.exitCode = 1;
   })
   .finally(async () => {

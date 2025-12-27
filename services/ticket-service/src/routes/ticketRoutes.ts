@@ -7,7 +7,6 @@ router.post("/", TicketController.createTicket);
 router.get("/", TicketController.getAllTickets);
 
 router.get("/user/:userId", TicketController.getTicketsByUser);
-router.get("/route/:routeId", TicketController.getTicketsByRoute);
 
 router.get("/:id", TicketController.getTicketById);
 

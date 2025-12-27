@@ -8,16 +8,26 @@ datasource db {
 }
 
 model Ticket {
-  id        Int      @id @default(autoincrement())
-  routeId   Int      @map("route_id")
-  userId    Int      @map("user_id")
-  price     Float
-  status    String   @default("ACTIVE")
+  id         Int      @id @default(autoincrement())
+  tripId     Int      @map("trip_id")
+  userId     Int      @map("user_id")
+  seatNumber Int      @map("seat_number")
+  price      Float
+  status     String   @default("ACTIVE")
+  saleDate   DateTime @map("sale_date")
 
-  saleDate  DateTime @map("sale_date")
+  createdAt  DateTime @map("created_at") @default(now())
+  updatedAt  DateTime @map("updated_at") @updatedAt
 
-  createdAt DateTime @map("created_at") @default(now())
-  updatedAt DateTime @map("updated_at") @updatedAt
-
+  @@unique([tripId, seatNumber], name: "unique_seat_per_trip")
   @@map("tickets")
+}
+
+model Trip {
+  id            Int      @id @default(autoincrement())
+  routeId       Int      @map("route_id")
+  departureTime DateTime @map("departure_time")
+  status        String   @default("SCHEDULED")
+
+  @@map("trips")
 }

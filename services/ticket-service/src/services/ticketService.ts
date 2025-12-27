@@ -15,10 +15,6 @@ export async function getTicketsByUser(userId: number): Promise<Ticket[]> {
   return prisma.ticket.findMany({ where: { userId } });
 }
 
-export async function getTicketsByRoute(routeId: number): Promise<Ticket[]> {
-  return prisma.ticket.findMany({ where: { routeId } });
-}
-
 export async function getAllTickets(): Promise<Ticket[]> {
   return prisma.ticket.findMany();
 }

@@ -3,15 +3,16 @@ import * as TicketService from "../services/ticketService";
 
 export async function createTicket(req: Request, res: Response) {
   try {
-    const { routeId, userId, price, status, saleDate } = req.body;
+    const { tripId, userId, seatNumber, price, status, saleDate } = req.body;
 
     if (!saleDate || isNaN(Date.parse(saleDate))) {
       return res.status(400).json({ message: "Invalid saleDate" });
     }
 
     const ticketData = {
-      routeId: Number(routeId),
+      tripId: Number(tripId),
       userId: Number(userId),
+      seatNumber: Number(seatNumber),
       price: Number(price),
       status: status ?? "ACTIVE",
       saleDate: new Date(saleDate),
@@ -52,17 +53,6 @@ export async function getTicketsByUser(req: Request, res: Response) {
   }
 }
 
-export async function getTicketsByRoute(req: Request, res: Response) {
-  try {
-    const routeId = Number(req.params.routeId);
-    const tickets = await TicketService.getTicketsByRoute(routeId);
-    res.json(tickets);
-  } catch (error) {
-    console.error("Error getting tickets by route:", error);
-    res.status(500).json({ message: "Failed to get tickets" });
-  }
-}
-
 export async function getAllTickets(req: Request, res: Response) {
   try {
     const tickets = await TicketService.getAllTickets();
@@ -78,8 +68,9 @@ export async function updateTicket(req: Request, res: Response) {
     const id = Number(req.params.id);
 
     const ticketData = {
-      routeId: req.body.routeId ? Number(req.body.routeId) : undefined,
+      tripId: req.body.tripId ? Number(req.body.tripId) : undefined,
       userId: req.body.userId ? Number(req.body.userId) : undefined,
+      seatNumber: req.body.seatNumber ? Number(req.body.seatNumber) : undefined,
       price: req.body.price ? Number(req.body.price) : undefined,
       status: req.body.status,
       saleDate: req.body.saleDate ? new Date(req.body.saleDate) : undefined,
