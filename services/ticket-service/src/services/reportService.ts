@@ -65,3 +65,30 @@ export async function getMonthlyEarningsReport(year: number, month: number) {
     byRoute
   };
 }
+
+export async function getMonthlyRouteReport(
+  year: number,
+  month: number,
+  routeId: number
+) {
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0, 23, 59, 59, 999);
+
+  const tickets = await prisma.ticket.findMany({
+    where: {
+      routeId,
+      saleDate: {
+        gte: start,
+        lte: end
+      }
+    }
+  });
+
+  return {
+    year,
+    month,
+    routeId,
+    totalTickets: tickets.length,
+    totalIncome: tickets.reduce((s, t) => s + t.price, 0)
+  };
+}
