@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: ["http://localhost:5173"], // vite default
+  origin: ["http://www.sidaroco.com:80"], // vite default
   credentials: true
 }));
 
