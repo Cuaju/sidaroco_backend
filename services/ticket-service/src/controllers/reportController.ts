@@ -26,3 +26,19 @@ export async function getMonthlyEarningsReport(req: Request, res: Response) {
 
   res.json(report);
 }
+
+export async function getMonthlyRouteReport(req: Request, res: Response) {
+  const { year, month, routeId } = req.query;
+
+  if (!year || !month || !routeId) {
+    return res.status(400).json({ message: "Year, month and routeId required" });
+  }
+
+  const report = await ReportService.getMonthlyRouteReport(
+    Number(year),
+    Number(month),
+    Number(routeId)
+  );
+
+  res.json(report);
+}
