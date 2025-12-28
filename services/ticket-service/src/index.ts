@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import ticketRoutes from "./routes/ticketRoutes";
 import reportRoutes from "./routes/reportRoutes";
+import tripRoutes from "./routes/tripRoutes";
 import cors from "cors";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 
 app.use("/tickets", ticketRoutes);
 app.use("/reports", reportRoutes);
+app.use("/trips", tripRoutes);
 
 const PORT = process.env.TICKET_SERVICE_PORT || 3004;
 

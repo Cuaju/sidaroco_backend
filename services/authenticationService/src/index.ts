@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: ["http://www.sidaroco.com:80"], // vite default
+  origin: ["http://localhost:5173"], // vite default
   credentials: true
 }));
 
@@ -18,7 +18,7 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use("/api/auth", authRouter);
 app.use("/api", internalRouter);
 
-const port = Number(process.env.PORT || 4000);
+const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {
   console.log(`auth service listening on http://localhost:${port}`);
 });

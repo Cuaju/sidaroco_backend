@@ -13,12 +13,12 @@ async function main() {
 
   const trips = [
     {
-      routeId: 1,
+      routeId: 61,
       departureTime: pastTripDate,
       status: "COMPLETED",
     },
     {
-      routeId: 2,
+      routeId: 68,
       departureTime: upcomingTripDate,
       status: "SCHEDULED",
     },
