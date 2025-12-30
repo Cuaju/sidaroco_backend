@@ -1,14 +1,14 @@
 import  {Request, Response} from "express";
-import { uploadToS3 } from "../utils/s3";
+import { uploadToS3, getSignedUrlForKey } from "../utils/s3";
 import * as DriverService from "../services/driver.service";
 
 export async function createDriver(req:Request, res:Response) {
 
     try{
-        let photoUrl: string = "";
+        let photoKey: string = "";
 
         if (req.file) {
-            photoUrl = await uploadToS3(req.file, "drivers");
+            photoKey = await uploadToS3(req.file, "drivers");
         }
 
 
@@ -18,10 +18,11 @@ export async function createDriver(req:Request, res:Response) {
             birdthDate: new Date(req.body.birdthDate),
             address: req.body.address,
             status: req.body.status,
-            photoUrl: photoUrl
+            photoKey: photoKey
         }
 
         const newDriver = await DriverService.createDriver(driverData);
+        newDriver.photoKey = await getSignedUrlForKey(newDriver.photoKey);
         res.status(201).json(newDriver);
     }catch(error){
         console.error("Error creating driver:", error);
@@ -39,6 +40,8 @@ export async function getDriverById(req: Request, res: Response) {
       return res.status(404).json({ message: "Driver not found" });
     }
 
+    driver.photoKey = await getSignedUrlForKey(driver.photoKey);
+    
     res.json(driver);
   } catch (error) {
     console.error("Error getting driver:", error);
@@ -46,35 +49,47 @@ export async function getDriverById(req: Request, res: Response) {
   }
 }
 
-export async function getAllDrivers(req:Request, res:Response) {
+export async function getAllDrivers(req: Request, res: Response) {
+  try {
+    const drivers = await DriverService.getAllDrivers();
 
-    try{
-        const drivers = await DriverService.getAllDrivers();
-        res.json(drivers);
-    }catch(error){
-        console.error("Error getting drivers:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    const optimizedDrivers = await Promise.all(
+      drivers.map(async (driver) => ({
+        id: driver.id,
+        name: driver.name,
+        licenseNumber: driver.licenseNumber,
+        birthDate: driver.birdthDate,
+        status: driver.status,
+        photoKey: driver.photoKey ? await getSignedUrlForKey(driver.photoKey) : "",
+      }))
+    );
+
+    res.json(optimizedDrivers);
+  } catch (error) {
+    console.error("Error getting drivers:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 }
 
 export async function updateDriver(req: Request, res: Response) {
   try {
     const id = parseInt(req.params.id);
-    let photoUrl: string | undefined;
+    let photoKey: string | undefined;
 
     if (req.file) {
-      photoUrl = await uploadToS3(req.file, "drivers");
+      photoKey = await uploadToS3(req.file, "drivers");
     }
 
     const updateData: Record<string, unknown> = { ...req.body };
-    if (photoUrl) {
-      updateData.photoUrl = photoUrl;
+    if (photoKey) {
+      updateData.photoKey = photoKey;
     }
     if (req.body.birthdate) {
       updateData.birthdate = new Date(req.body.birthdate);
     }
 
     const driver = await DriverService.updateDriver(id, updateData);
+    driver.photoKey = await getSignedUrlForKey(driver.photoKey);
     res.json(driver);
   } catch (error) {
     console.error("Error updating driver:", error);

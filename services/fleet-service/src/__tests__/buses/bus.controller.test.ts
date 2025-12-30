@@ -10,7 +10,7 @@ const mockBus = {
   plateNumber: "ABC-1234",
   capacity: 50,
   status: "available",
-  photoUrl: "",
+  photoKey: "",
   routeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -107,7 +107,7 @@ describe("Bus Controller", () => {
       prismaMock.bus.create.mockResolvedValue({
         id: 2,
         ...newBus,
-        photoUrl: "",
+        photoKey: "",
         routeId: null,
         createdAt: new Date(),
         updatedAt: new Date(),

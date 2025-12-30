@@ -9,7 +9,7 @@ const mockDriver = {
   birdthDate: new Date("1990-01-01"),
   address: "123 Test Street",
   status: "available",
-  photoUrl: "",
+  photoKey: "",
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -105,7 +105,7 @@ describe("Driver Controller", () => {
         id: 2,
         ...newDriver,
         birdthDate: new Date(newDriver.birdthDate),
-        photoUrl: "",
+        photoKey: "",
         createdAt: new Date(),
         updatedAt: new Date(),
       });

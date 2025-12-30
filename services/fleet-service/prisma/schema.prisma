@@ -20,7 +20,7 @@ model Driver{
   birdthDate DateTime @map("birth_date")
   address String
   status String
-  photoUrl String @map("photo_url")
+  photoKey String @map("photo_key")
   createdAt DateTime @map("created_at") @default(now())
   updatedAt DateTime @map("updated_at") @updatedAt
 
@@ -35,7 +35,7 @@ model Bus{
   plateNumber String @map("plate_number") @unique
   capacity Int
   status String
-  photoUrl String @map("photo_url")
+  photoKey String @map("photo_key")
   createdAt DateTime @map("created_at") @default(now())
   updatedAt DateTime @map("updated_at") @updatedAt
   routeId Int? @map("route_id")

@@ -1,15 +1,14 @@
 import { Router } from "express";
 import multer from "multer";
-import { requireAuth } from "../middlewares/auth";
 import * as BusController from "../controllers/bus.controller";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/", requireAuth, upload.single("photo"), BusController.createBus);
-router.get("/:id", requireAuth, BusController.getBusById);
-router.get("/", requireAuth, BusController.getAllBuses);
-router.put("/:id", requireAuth, upload.single("photo"), BusController.updateBus);
-router.delete("/:id", requireAuth, BusController.deleteBus);
+router.post("/",  upload.single("photo"), BusController.createBus);
+router.get("/:id",  BusController.getBusById);
+router.get("/",  BusController.getAllBuses);
+router.put("/:id",  upload.single("photo"), BusController.updateBus);
+router.delete("/:id", BusController.deleteBus);
 
 export default router;

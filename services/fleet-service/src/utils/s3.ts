@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
 const s3Client = new S3Client({
@@ -26,5 +27,16 @@ export async function uploadToS3(
     })
   );
 
-  return `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  return key;
+
 }
+
+export async function getSignedUrlForKey(key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+  });
+
+  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  return url;
+} 

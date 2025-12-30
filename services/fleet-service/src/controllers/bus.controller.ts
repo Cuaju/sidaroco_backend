@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { uploadToS3 } from "../utils/s3";
+import { uploadToS3,getSignedUrlForKey  } from "../utils/s3";
 import * as BusService from "../services/bus.service";
 
 export async function createBus(req: Request, res: Response) {
   try {
-    let photoUrl: string = "";
+    let photoKey: string = "";
     let routeID: number = 0;
 
     if (req.file) {
-      photoUrl = await uploadToS3(req.file, "buses");
+      photoKey = await uploadToS3(req.file, "buses");
     }
 
     if (req.body.routeID) {
@@ -25,11 +25,14 @@ export async function createBus(req: Request, res: Response) {
       plateNumber: req.body.plateNumber,
       capacity: parseInt(req.body.capacity),
       status: req.body.status,
-      photoUrl: photoUrl,
+      photoKey: photoKey,
       routeId: routeID,
     };
 
     const newBus = await BusService.createBus(busData);
+
+    newBus.photoKey = await getSignedUrlForKey(newBus.photoKey);
+
     res.status(201).json(newBus);
   } catch (error) {
     console.error("Error creating bus:", error);
@@ -42,8 +45,13 @@ export async function getBusById(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const bus = await BusService.getBusById(id);
 
-    if (!bus) {
+
+    if (bus == null) {
       return res.status(404).json({ message: "Bus not found" });
+    }
+
+    if (bus.photoKey) {
+      bus.photoKey = await getSignedUrlForKey(bus.photoKey);
     }
 
     res.json(bus);
@@ -56,7 +64,20 @@ export async function getBusById(req: Request, res: Response) {
 export async function getAllBuses(req: Request, res: Response) {
   try {
     const buses = await BusService.getAllBuses();
-    res.json(buses);
+
+    const realBuses = await Promise.all(buses.map(async (bus) => ({
+      id: bus.id,
+      name: bus.name,
+      model: bus.model,
+      vin: bus.vin,
+      plateNumber: bus.plateNumber,
+      capacity: bus.capacity,
+      status: bus.status,
+      routeId: bus.routeId,
+      photoKey: bus.photoKey ? await getSignedUrlForKey(bus.photoKey) : bus.photoKey,
+    })));
+
+    res.json(realBuses);
   } catch (error) {
     console.error("Error getting buses:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -66,11 +87,11 @@ export async function getAllBuses(req: Request, res: Response) {
 export async function updateBus(req: Request, res: Response) {
   try {
     const id = parseInt(req.params.id);
-    let photoUrl: string | undefined;
+    let photoKey: string | undefined;
     let routeID: number | undefined;
 
     if (req.file) {
-      photoUrl = await uploadToS3(req.file, "buses");
+      photoKey = await uploadToS3(req.file, "buses");
     }
 
     if (req.body.routeID) {
@@ -88,7 +109,7 @@ export async function updateBus(req: Request, res: Response) {
       plateNumber: req.body.plateNumber,
       capacity: req.body.capacity ? parseInt(req.body.capacity) : undefined,
       status: req.body.status,
-      photoUrl: photoUrl,
+      photoKey: photoKey,
       routeId: routeID,
     };
 
@@ -97,6 +118,8 @@ export async function updateBus(req: Request, res: Response) {
     if (!updatedBus) {
       return res.status(404).json({ message: "Bus not found" });
     }
+
+    
 
     res.json(updatedBus);
   } catch (error) {

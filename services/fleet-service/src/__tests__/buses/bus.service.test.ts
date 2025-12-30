@@ -9,7 +9,7 @@ const mockBus = {
   plateNumber: "ABC-1234",
   capacity: 50,
   status: "available",
-  photoUrl: "",
+  photoKey: "",
   routeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -25,7 +25,7 @@ describe("Bus Service", () => {
         plateNumber: "ABC-1234",
         capacity: 50,
         status: "available",
-        photoUrl: "",
+        photoKey: "",
         routeId: null,
       };
 
@@ -50,7 +50,7 @@ describe("Bus Service", () => {
           plateNumber: "NEW-1234",
           capacity: 30,
           status: "available",
-          photoUrl: "",
+          photoKey: "",
           routeId: null,
         })
       ).rejects.toThrow("Unique constraint failed");
