@@ -16,6 +16,38 @@ export class RouteController {
       return res.status(500).json({ message: "internal error", detail: e?.message });
     }
   }
+  static async update(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      const { name, origin, destination } = req.body ?? {};
+  
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: "invalid id" });
+      }
+  
+      if (!name) return res.status(400).json({ message: "name is required" });
+  
+      if (!origin?.name) return res.status(400).json({ message: "origin.name is required" });
+      if (!isNum(origin?.lat)) return res.status(400).json({ message: "origin.lat must be number" });
+      if (!isNum(origin?.lng)) return res.status(400).json({ message: "origin.lng must be number" });
+  
+      if (!destination?.name)
+        return res.status(400).json({ message: "destination.name is required" });
+      if (!isNum(destination?.lat))
+        return res.status(400).json({ message: "destination.lat must be number" });
+      if (!isNum(destination?.lng))
+        return res.status(400).json({ message: "destination.lng must be number" });
+  
+      const updated = await RouteService.update(id, { name, origin, destination });
+      return res.json(updated);
+    } catch (e: any) {
+      if (String(e?.code) === "P2025") {
+        return res.status(404).json({ message: "not found" });
+      }
+      return res.status(500).json({ message: "internal error", detail: e?.message });
+    }
+  }
+  
 
   static async getById(req: Request, res: Response) {
     try {
