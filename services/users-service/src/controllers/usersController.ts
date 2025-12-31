@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { Prisma } from "../generated/prisma/client";
-import { authCreateAccount, authPatchAccount, authPatchPassword } from "../utils/authClient";
-import { createProfile, getProfileByAccountId, updateProfileByAccountId } from "../services/usersService";
+import { authCreateAccount, authPatchAccount, authPatchPassword , authGetAdminAccounts, authSetAdminActive, authCreateAdminAccount} from "../utils/authClient";
+import { createProfile, getProfileByAccountId, updateProfileByAccountId, getProfilesByAccountIds } from "../services/usersService";
 import { requestCode, verifyCodeAndCreateAccount } from "../services/emailTokenService";
 
 
@@ -10,6 +10,96 @@ function isNonEmpty(s: unknown): s is string {
 }
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+
+function requireFinanceManager(req: Request, res: Response): boolean {
+  const role = (req.user as any)?.role ?? (req.user as any)?.userType;
+  if (role !== "FinanceManager") {
+    res.status(403).json({ message: "forbidden" });
+    return false;
+  }
+  return true;
+}
+
+// GET /api/users/admin/accounts
+export async function getAdminAccounts(req: Request, res: Response) {
+  if (!requireFinanceManager(req, res)) return;
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: "unauthorized" });
+
+  const { accounts } = await authGetAdminAccounts(authHeader);
+
+  const ids = accounts.map((a) => a.id);
+  const profiles = await getProfilesByAccountIds(ids);
+  const map = new Map(profiles.map((p) => [p.accountId, p]));
+
+  const out = accounts.map((a) => ({
+    ...a,
+    profile: map.get(a.id) ?? null,
+  }));
+
+  return res.status(200).json({ accounts: out });
+}
+
+// POST /api/users/admin/accounts
+export async function createAdminAccountWithProfile(req: Request, res: Response) {
+  if (!requireFinanceManager(req, res)) return;
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: "unauthorized" });
+
+  const { email, username, password, userType, fullName, phoneNumber } = req.body as any;
+
+  if (!email || !isNonEmpty(email) || !isValidEmail(email)) return res.status(400).json({ message: "invalid email" });
+  if (!username || !isNonEmpty(username) || username.trim().length < 3) return res.status(400).json({ message: "invalid username" });
+  if (!password || !isNonEmpty(password) || password.length < 6) return res.status(400).json({ message: "invalid password (min 6)" });
+
+  const allowed = ["RouteManager", "FinanceManager", "Cashier"];
+  if (!allowed.includes(userType)) return res.status(400).json({ message: "invalid admin userType" });
+
+  if (!fullName || !isNonEmpty(fullName)) return res.status(400).json({ message: "fullName is required" });
+  if (phoneNumber !== undefined && phoneNumber !== null && typeof phoneNumber !== "string")
+    return res.status(400).json({ message: "invalid phoneNumber" });
+
+  // 1) create account in auth
+  const created = await authCreateAdminAccount(authHeader, {
+    email: email,
+    username: username.trim(),
+    password,
+    userType,
+  });
+
+  const accountId = created.accountId;
+
+  // 2) create profile in users db
+  try {
+    const profile = await createProfile(accountId, fullName.trim(), phoneNumber?.trim());
+    return res.status(201).json({ accountId, profile });
+  } catch (e: any) {
+    // compensation: deactivate account if profile failed
+    try {
+      await authSetAdminActive(authHeader, accountId, false);
+    } catch {}
+    return res.status(500).json({ message: "profile create failed (account created but deactivated)" });
+  }
+}
+
+// PATCH /api/users/admin/accounts/:accountId/active
+export async function setAdminActive(req: Request, res: Response) {
+  if (!requireFinanceManager(req, res)) return;
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: "unauthorized" });
+
+  const { accountId } = req.params;
+  const { isActive } = req.body as { isActive?: unknown };
+
+  if (typeof isActive !== "boolean") return res.status(400).json({ message: "isActive must be boolean" });
+
+  const out = await authSetAdminActive(authHeader, accountId, isActive);
+  return res.status(200).json(out);
 }
 
 // POST /api/users/register

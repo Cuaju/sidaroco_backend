@@ -14,11 +14,18 @@ export async function getProfileByAccountId(accountId: string) {
   });
 }
 
+export async function getProfilesByAccountIds(accountIds: string[]) {
+  if (accountIds.length === 0) return [];
+  return prisma.userProfile.findMany({
+    where: { accountId: { in: accountIds } },
+    select: { id: true, accountId: true, fullName: true, phoneNumber: true },
+  });
+}
+
 export async function updateProfileByAccountId(
   accountId: string,
   patch: Partial<{ fullName: string; phoneNumber: string | null }>
-) 
-{
+) {
   return prisma.userProfile.update({
     where: { accountId },
     data: patch,

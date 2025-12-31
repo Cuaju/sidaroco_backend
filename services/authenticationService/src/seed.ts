@@ -31,29 +31,37 @@ async function main() {
     },
   ];
 
-  for (const a of seedAccounts) {
-    const created = await prisma.account.upsert({
-      where: { email: a.email },
-      create: {
-        email: a.email,
-        username: a.username,
-        passwordHash,
-        isActive: true,
-        userType: a.userType,
-      },
-      update: {
-        // if you want seed to "refresh" accounts every time:
-        username: a.username,
-        isActive: true,
-        userType: a.userType,
-        // uncomment if you want to reset password on every seed:
-        passwordHash,
-      },
-      select: { id: true, email: true, username: true, userType: true, isActive: true },
-    });
+for (const a of seedAccounts) {
+  const existing = await prisma.account.findFirst({
+    where: { OR: [{ email: a.email }, { username: a.username }] },
+    select: { id: true },
+  });
 
-    console.log("Seeded:", created);
-  }
+  const created = existing
+    ? await prisma.account.update({
+        where: { id: existing.id },
+        data: {
+          email: a.email,
+          username: a.username,
+          isActive: true,
+          userType: a.userType,
+          passwordHash,
+        },
+        select: { id: true, email: true, username: true, userType: true, isActive: true },
+      })
+    : await prisma.account.create({
+        data: {
+          email: a.email,
+          username: a.username,
+          isActive: true,
+          userType: a.userType,
+          passwordHash,
+        },
+        select: { id: true, email: true, username: true, userType: true, isActive: true },
+      });
+
+  console.log("Seeded:", created);
+}
 
   console.log("\n✅ Seed done.");
   console.log(`Password for all seeded accounts: ${defaultPassword}`);
