@@ -5,6 +5,9 @@ const { generateToken } = require("@sidaroco/auth") as {
 };
 import { Prisma, UserType } from "@prisma/client";
 
+const ADMIN_TYPES: UserType[] = [UserType.RouteManager, UserType.FinanceManager, UserType.Cashier];
+
+
 export async function loginWithEmail(email: string, password: string) {
   const account = await prisma.account.findUnique({
     where: { email },
@@ -35,24 +38,26 @@ export async function loginWithEmail(email: string, password: string) {
   };
 }
 
-export async function createAccount(_email:string, _username:string, _passwordHash:string) {
-  try{
-    const account = prisma.account.create({
-      data:{
-        email:_email,
-        username: _username,
+export async function createAccount(_email: string, _username: string, _passwordHash: string, prismaUserType: UserType = UserType.Customer
+) {
+  try {
+    const account = await prisma.account.create({
+      data: {
+        email: _email,
+        username: _username.trim(),
         passwordHash: _passwordHash,
         isActive: true,
-        userType: UserType.Customer
-      }
-    })
+        userType: prismaUserType, 
+      },
+      select: { id: true },
+    });
 
-    return {id: (await account).id};
-  }
-  catch (e: any) {
-  if (e?.code === "P2002") {
-    return { error: "DUPLICATE EMAIL OR USERNAME" as const };
-  }
+    return { id: account.id };
+  } catch (e: any) {
+    if (e?.code === "P2002") {
+      console.log(e);
+      return { error: "DUPLICATE_EMAIL_OR_USERNAME" as const };
+    }
     throw e;
   }
 }
@@ -81,4 +86,24 @@ export async function updateAccountPasswordHash(id: string, passwordHash: string
     where: { id },
     data: { passwordHash },
   });
+}
+
+export async function listAdminAccounts() {
+  return prisma.account.findMany({
+    where: { userType: { in: ADMIN_TYPES } },
+    orderBy: { createdAt: "desc" as any }, // if you have createdAt; if not, delete this line
+    select: { id: true, email: true, username: true, userType: true, isActive: true },
+  });
+}
+
+export async function setAccountActive(id: string, isActive: boolean) {
+  return prisma.account.update({
+    where: { id },
+    data: { isActive },
+    select: { id: true, email: true, username: true, userType: true, isActive: true },
+  });
+}
+
+export function isAdminUserType(t: UserType) {
+  return ADMIN_TYPES.includes(t);
 }

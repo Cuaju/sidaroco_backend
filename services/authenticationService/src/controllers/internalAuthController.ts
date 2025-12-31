@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { Prisma } from "@prisma/client";
-import { createAccount,findAccountById, updateAccountFields, updateAccountPasswordHash } from "../services/authService";
+import { Prisma, UserType } from "@prisma/client";
+import { createAccount,findAccountById, updateAccountFields, updateAccountPasswordHash,   listAdminAccounts, setAccountActive, isAdminUserType, } from "../services/authService";
 import { verifyPassword, hashPassword } from "../utils/hashing";
 
 function isNonEmpty(s: unknown): s is string {
@@ -12,10 +12,17 @@ function isValidEmail(email: string) {
 }
 
 const allowedUserTypes = ["RouteManager", "Customer", "FinanceManager", "Cashier"] as const;
+const allowedAdminUserTypes = ["RouteManager", "FinanceManager", "Cashier"] as const;
+
 type AllowedUserType = (typeof allowedUserTypes)[number];
+type AllowedAdminUserType = (typeof allowedAdminUserTypes)[number];
+
 
 function isAllowedUserType(user: unknown): user is AllowedUserType {
   return typeof user === "string" && (allowedUserTypes as readonly string[]).includes(user);
+}
+function isAllowedAdminUserType(v: unknown): v is AllowedAdminUserType {
+  return typeof v === "string" && (allowedAdminUserTypes as readonly string[]).includes(v);
 }
 
 export async function createNewAccountHashed(req: Request, res: Response) {
@@ -132,7 +139,7 @@ export async function updateAccount(req: Request, res: Response) {
     if (!isAllowedUserType(userType)) {
       return res.status(400).json({ message: "invalid userType" });
     }
-    updates.userType = userType;
+    updates.userType = userType as UserType;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -196,4 +203,63 @@ export async function updatePassword(req: Request, res: Response) {
   await updateAccountPasswordHash(id, newHash);
 
   return res.status(200).json({ message: "password updated" });
+}
+
+
+// POST /api/internal/admin/accounts
+export async function createAdminAccount(req: Request, res: Response) {
+  const { newEmail, newUsername, newPassword, userType } = req.body as {
+    newEmail?: string;
+    newUsername?: string;
+    newPassword?: string;
+    userType?: unknown;
+  };
+
+  if (!newEmail || !isNonEmpty(newEmail) || !isValidEmail(newEmail))
+    return res.status(400).json({ message: "invalid email" });
+
+  if (!newUsername || !isNonEmpty(newUsername) || newUsername.trim().length < 3)
+    return res.status(400).json({ message: "invalid username (min 3)" });
+
+  if (!newPassword || !isNonEmpty(newPassword) || newPassword.length < 6)
+    return res.status(400).json({ message: "invalid password (min 6)" });
+
+  if (!isAllowedAdminUserType(userType))
+    return res.status(400).json({ message: "invalid admin userType" });
+
+  const prismaUserType = userType as UserType;
+  if (!isAdminUserType(prismaUserType))
+    return res.status(400).json({ message: "userType must be admin type" });
+
+  const passwordHash = await hashPassword(newPassword);
+
+  const created = await createAccount(newEmail, newUsername, passwordHash, prismaUserType);
+  if ("error" in created) return res.status(409).json({ message: "email or username already in use" });
+
+  return res.status(201).json({ accountId: created.id });
+}
+
+// GET /api/internal/admin/accounts
+export async function getAdminAccounts(req: Request, res: Response) {
+  const accounts = await listAdminAccounts();
+  return res.status(200).json({ accounts });
+}
+
+// PATCH /api/internal/admin/accounts/:id/active
+export async function patchAdminActive(req: Request, res: Response) {
+  const { id } = req.params;
+  const { isActive } = req.body as { isActive?: unknown };
+
+  if (typeof isActive !== "boolean")
+    return res.status(400).json({ message: "isActive must be boolean" });
+
+  try {
+    const updated = await setAccountActive(id, isActive);
+    return res.status(200).json({ account: updated });
+  } catch (e: any) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return res.status(404).json({ message: "account not found" });
+    }
+    return res.status(500).json({ message: "internal error" });
+  }
 }
