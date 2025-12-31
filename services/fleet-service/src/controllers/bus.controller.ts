@@ -2,6 +2,25 @@ import { Request, Response } from "express";
 import { uploadToS3,getSignedUrlForKey  } from "../utils/s3";
 import * as BusService from "../services/bus.service";
 
+type RouteDTO = { id: string };
+
+async function httpGetJson<T>(
+  url: string,
+  req: Request
+): Promise<{ status: number; json?: T }> {
+  const authHeader = req.header("authorization");
+
+  const headers: Record<string, string> = {
+    ...(authHeader ? { Authorization: authHeader } : {}),
+  };
+
+  const res = await fetch(url, { headers });
+
+  if (!res.ok) return { status: res.status };
+  const json = (await res.json()) as T;
+  return { status: res.status, json };
+}
+
 export async function createBus(req: Request, res: Response) {
   try {
     let photoKey: string = "";
@@ -11,12 +30,21 @@ export async function createBus(req: Request, res: Response) {
       photoKey = await uploadToS3(req.file, "buses");
     }
 
-    if (req.body.routeID) {
-      routeID = parseInt(req.body.routeID);
+    if (req.body.routeId) {
+      routeID = parseInt(req.body.routeId);
     }
 
-    //TODO:
-    //here check if the routeID exists in the database if routeID is provided, if not, return 400 error
+    if (routeID) {
+      const ROUTE_SERVICE_URL = process.env.ROUTE_SERVICE_URL || "http://localhost:3001";
+      const routeResp = await httpGetJson<RouteDTO>(`${ROUTE_SERVICE_URL}/routes/${routeID}`, req);
+      
+      if (routeResp.status === 404) {
+        return res.status(400).json({ message: "routeId not found" });
+      }
+      if (routeResp.status >= 400) {
+        return res.status(502).json({ message: "Failed to validate routeId" });
+      }
+    }
 
     const busData = {
       name: req.body.name,
@@ -92,15 +120,21 @@ export async function updateBus(req: Request, res: Response) {
 
     if (req.file) {
       photoKey = await uploadToS3(req.file, "buses");
+    }    if (req.body.routeId) {
+      routeID = parseInt(req.body.routeId);
     }
 
-    if (req.body.routeID) {
-      routeID = parseInt(req.body.routeID);
+    if (routeID) {
+      const ROUTE_SERVICE_URL = process.env.ROUTE_SERVICE_URL || "http://localhost:3001";
+      const routeResp = await httpGetJson<RouteDTO>(`${ROUTE_SERVICE_URL}/routes/${routeID}`, req);
+      
+      if (routeResp.status === 404) {
+        return res.status(400).json({ message: "routeId not found" });
+      }
+      if (routeResp.status >= 400) {
+        return res.status(502).json({ message: "Failed to validate routeId" });
+      }
     }
-
-    //TODO:
-    //here check if the routeID exists in the database if routeID is provided, if not, return 400 error
-
 
     const busData: any = {
       name: req.body.name,

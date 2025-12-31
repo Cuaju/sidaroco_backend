@@ -42,6 +42,8 @@ services:
       FLEET_SERVICE_PORT: 3001    
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_fleet
       AUTH_SERVICE_URL: http://authentication-service:3000
+      ROUTE_SERVICE_URL: http://route-service:3003
+
     depends_on:
       - postgres
     ports:

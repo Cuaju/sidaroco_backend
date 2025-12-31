@@ -224,3 +224,54 @@ export async function duplicateSchedule(
 
 // Alias for backward compatibility
 export const getByDate = getScheduleByDate;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Summary & Range Queries
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns a summary of all schedules with trip counts.
+ */
+export async function getSummary(): Promise<
+  { date: string; tripCount: number; isLocked: boolean }[]
+> {
+  const schedules = await prisma.dailySchedule.findMany({
+    include: {
+      _count: { select: { trips: true } },
+    },
+    orderBy: { serviceDate: "asc" },
+  });
+
+  return schedules.map((s) => ({
+    date: s.serviceDate.toISOString().split("T")[0],
+    tripCount: s._count.trips,
+    isLocked: s.isLocked,
+  }));
+}
+
+/**
+ * Returns schedules within a date range with trip counts.
+ */
+export async function getSchedulesInRange(
+  from: Date,
+  to: Date
+): Promise<{ serviceDate: string; tripCount: number; isLocked: boolean }[]> {
+  const schedules = await prisma.dailySchedule.findMany({
+    where: {
+      serviceDate: {
+        gte: from,
+        lte: to,
+      },
+    },
+    include: {
+      _count: { select: { trips: true } },
+    },
+    orderBy: { serviceDate: "asc" },
+  });
+
+  return schedules.map((s) => ({
+    serviceDate: s.serviceDate.toISOString().split("T")[0],
+    tripCount: s._count.trips,
+    isLocked: s.isLocked,
+  }));
+}

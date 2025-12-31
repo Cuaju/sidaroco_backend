@@ -3,6 +3,12 @@ import * as ScheduleController from "../controllers/schedule.controller";
 
 const router = Router();
 
+// Summary for calendar overview
+router.get("/summary", ScheduleController.getSummary);
+
+// Schedules in a date range
+router.get("/range", ScheduleController.getSchedulesInRange);
+
 // Create an empty schedule
 router.post("/", ScheduleController.createEmptySchedule);
 

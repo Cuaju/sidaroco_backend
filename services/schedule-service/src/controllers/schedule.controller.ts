@@ -427,3 +427,52 @@ export async function duplicateSchedule(req: Request, res: Response) {
     res.status(500).json({ message: "Failed to duplicate schedule" });
   }
 }
+
+export async function getSummary(req: Request, res: Response) {
+  try {
+    const summary = await ScheduleService.getSummary();
+    res.status(200).json(summary);
+  } catch (error) {
+    console.error("Error fetching summary:", error);
+    res.status(500).json({ message: "Failed to fetch summary" });
+  }
+}
+
+export async function getSchedulesInRange(req: Request, res: Response) {
+  try {
+    const { from, to } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({
+        message: "Both 'from' and 'to' query parameters are required",
+      });
+    }
+
+    const fromDate = new Date(from as string);
+    const toDate = new Date(to as string);
+
+    if (isNaN(fromDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid 'from' date format. Use YYYY-MM-DD",
+      });
+    }
+
+    if (isNaN(toDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid 'to' date format. Use YYYY-MM-DD",
+      });
+    }
+
+    if (fromDate > toDate) {
+      return res.status(400).json({
+        message: "'from' date must be before or equal to 'to' date",
+      });
+    }
+
+    const schedules = await ScheduleService.getSchedulesInRange(fromDate, toDate);
+    res.status(200).json(schedules);
+  } catch (error) {
+    console.error("Error fetching schedules in range:", error);
+    res.status(500).json({ message: "Failed to fetch schedules in range" });
+  }
+}
