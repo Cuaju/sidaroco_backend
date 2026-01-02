@@ -7,11 +7,11 @@ import cors from "cors";
 
 const app = express();
 
+const corsURL =  String(process.env.CORS_DOMAIN || "http://localhost:5173");
+
 app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: [corsURL], 
+  credentials: true
 }));
 
 app.use(express.json());

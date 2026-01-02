@@ -6,8 +6,11 @@ import { routeRouter } from "./routes/route.routes";
 const app = express();
 
 app.use(express.json());
+
+const corsURL =  String(process.env.CORS_DOMAIN || "http://localhost:5173");
+
 app.use(cors({
-  origin: ["http://localhost:5173"],
+  origin: [corsURL], 
   credentials: true
 }));
 

@@ -8,8 +8,10 @@ const app = express();
 
 app.use(express.json());
 
+const corsURL =  String(process.env.CORS_DOMAIN || "http://localhost:5173");
+
 app.use(cors({
-  origin: ["http://localhost:5173"], // vite default
+  origin: [corsURL], 
   credentials: true
 }));
 
