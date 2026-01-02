@@ -92,6 +92,27 @@ export async function getScheduleForDay(req: Request, res: Response) {
   }
 }
 
+export async function getTripById(req: Request, res: Response) {
+  try {
+    const tripId = Number(req.params.tripId);
+
+    if (isNaN(tripId)) {
+      return res.status(400).json({ message: "Invalid tripId" });
+    }
+
+    const trip = await ScheduleService.getTripById(tripId);
+
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    res.status(200).json(trip);
+  } catch (error) {
+    console.error("Error fetching trip:", error);
+    res.status(500).json({ message: "Failed to fetch trip" });
+  }
+}
+
 export async function addTripToSchedule(req: Request, res: Response) {
   try {
     const {
@@ -167,8 +188,8 @@ export async function addTripToSchedule(req: Request, res: Response) {
     }
 
 
-        const [hours, minutes, seconds = "0"] = departureTime.split(":");
-    const departureDate = new Date();
+    const [hours, minutes, seconds = "0"] = departureTime.split(":");
+    const departureDate = new Date(date);
     departureDate.setHours(Number(hours), Number(minutes), Number(seconds), 0);
 
     const trip = await ScheduleService.addTripToSchedule({

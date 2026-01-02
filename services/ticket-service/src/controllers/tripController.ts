@@ -1,15 +1,48 @@
 import { Request, Response } from "express";
 import * as TripService from "../services/tripService";
-//FIXME Implement proper call to Schedule service 
+
+const SCHEDULE_SERVICE_URL =
+  process.env.SCHEDULE_SERVICE_URL || "http://localhost:3006";
+
 export async function getAvailableSchedules(req: Request, res: Response) {
   const routeId = Number(req.params.routeId);
+  const date = String(req.query.date);
 
-  if (Number.isNaN(routeId)) {
-    return res.status(400).json({ message: "Invalid routeId" });
+  if (Number.isNaN(routeId) || !date) {
+    return res.status(400).json({ message: "routeId and date are required" });
   }
 
-  const schedules = TripService.getAvailableSchedules(routeId);
-  res.json(schedules.map(hour => ({ hour })));
+  const response = await fetch(
+    `${SCHEDULE_SERVICE_URL}/schedule/${date}`
+  );
+
+  if (response.status === 404) {
+    return res.json([]);
+  }
+
+  if (!response.ok) {
+    return res.status(502).json({ message: "Schedule service unavailable" });
+  }
+
+  const schedule = await response.json();
+
+  const hours = schedule.trips
+    .filter((t: any) => t.routeId === routeId && t.departureTime)
+    .map((t: any) => {
+      const d = new Date(t.departureTime);
+      if (isNaN(d.getTime())) return null;
+      return {
+        hour: d.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+      };
+    })
+    .filter(Boolean);
+
+
+  res.json(hours);
 }
 
 export async function selectSchedule(req: Request, res: Response) {
@@ -19,11 +52,36 @@ export async function selectSchedule(req: Request, res: Response) {
     return res.status(400).json({ message: "Missing data" });
   }
 
-  const trip = await TripService.getOrCreateTrip(
-    Number(routeId),
-    String(date),
-    String(hour)
+  const response = await fetch(
+    `${SCHEDULE_SERVICE_URL}/schedule/${date}`
   );
+
+  if (!response.ok) {
+    return res.status(502).json({ message: "Schedule service unavailable" });
+  }
+
+  const schedule = await response.json();
+
+  const trip = schedule.trips.find((t: any) => {
+    if (Number(t.routeId) !== Number(routeId)) return false;
+
+    const d = new Date(t.departureTime);
+    if (isNaN(d.getTime())) return false;
+
+    const h = d.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    return h === hour;
+  });
+
+
+
+  if (!trip) {
+    return res.status(404).json({ message: "Trip not found" });
+  }
 
   res.json(trip);
 }

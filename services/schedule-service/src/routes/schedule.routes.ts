@@ -9,6 +9,9 @@ router.get("/summary", ScheduleController.getSummary);
 // Schedules in a date range
 router.get("/range", ScheduleController.getSchedulesInRange);
 
+// An specific scheduled trip by ID
+router.get("/trip/:tripId", ScheduleController.getTripById);
+
 // Create an empty schedule
 router.post("/", ScheduleController.createEmptySchedule);
 
