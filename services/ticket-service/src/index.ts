@@ -3,16 +3,8 @@ import express from "express";
 import ticketRoutes from "./routes/ticketRoutes";
 import reportRoutes from "./routes/reportRoutes";
 import tripRoutes from "./routes/tripRoutes";
-import cors from "cors";
 
 const app = express();
-
-const corsURL =  String(process.env.CORS_DOMAIN || "http://localhost:5173");
-
-app.use(cors({
-  origin: [corsURL], 
-  credentials: true
-}));
 
 app.use(express.json());
 
