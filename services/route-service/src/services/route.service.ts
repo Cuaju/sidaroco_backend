@@ -1,8 +1,14 @@
 import prisma from "../db/prisma";
 
-export type LocationInput = { name: string; lat: number; lng: number };
+export type LocationInput = {
+  name: string;
+  lat: number;
+  lng: number;
+};
+
 export type CreateRouteInput = {
   name: string;
+  ticketPrice: number; 
   origin: LocationInput;
   destination: LocationInput;
 };
@@ -10,19 +16,28 @@ export type CreateRouteInput = {
 export class RouteService {
   static async list(params?: { skip?: number; take?: number; q?: string }) {
     const { skip = 0, take = 50, q } = params ?? {};
+
     return prisma.route.findMany({
       skip,
       take,
-      where: q ? { name: { contains: q, mode: "insensitive" } } : undefined,
-      include: { origin: true, destination: true },
+      where: q
+        ? { name: { contains: q, mode: "insensitive" } }
+        : undefined,
+      include: {
+        origin: true,
+        destination: true,
+      },
       orderBy: { createdAt: "desc" },
     });
   }
-  
+
   static async getById(id: number) {
     return prisma.route.findUnique({
       where: { id },
-      include: { origin: true, destination: true },
+      include: {
+        origin: true,
+        destination: true,
+      },
     });
   }
 
@@ -30,6 +45,7 @@ export class RouteService {
     return prisma.route.create({
       data: {
         name: input.name,
+        ticketPrice: input.ticketPrice, 
         origin: {
           connectOrCreate: {
             where: {
@@ -63,14 +79,19 @@ export class RouteService {
           },
         },
       },
-      include: { origin: true, destination: true },
+      include: {
+        origin: true,
+        destination: true,
+      },
     });
   }
+
   static async update(id: number, input: CreateRouteInput) {
     return prisma.route.update({
       where: { id },
       data: {
         name: input.name,
+        ticketPrice: input.ticketPrice, 
         origin: {
           connectOrCreate: {
             where: {
@@ -104,12 +125,16 @@ export class RouteService {
           },
         },
       },
-      include: { origin: true, destination: true },
+      include: {
+        origin: true,
+        destination: true,
+      },
     });
   }
-  
 
   static async remove(id: number) {
-    return prisma.route.delete({ where: { id } });
+    return prisma.route.delete({
+      where: { id },
+    });
   }
 }

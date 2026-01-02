@@ -51,13 +51,14 @@ async function main() {
 
   const hubs = ["xalapa", "veracruz"];
   const allCities = locations.map(l => l.key);
-
   const routes: Array<{ from: string; to: string }> = [];
 
   for (const hub of hubs) {
     for (const city of allCities) {
-      if (hub !== city) routes.push({ from: hub, to: city });
-      if (hub !== city) routes.push({ from: city, to: hub });
+      if (hub !== city) {
+        routes.push({ from: hub, to: city });
+        routes.push({ from: city, to: hub });
+      }
     }
   }
 
@@ -84,17 +85,23 @@ async function main() {
           destinationId: locMap[r.to],
         },
       },
+      
       update: {},
       create: {
-        name: `${locations.find(l => l.key === r.from)!.name} → ${locations.find(l => l.key === r.to)!.name}`,
+        name: `${locations.find(l => l.key === r.from)!.name} → ${
+          locations.find(l => l.key === r.to)!.name
+        }`,
         originId: locMap[r.from],
         destinationId: locMap[r.to],
+        ticketPrice: 0,
       },
     });
+    
   }
 
-  console.log("Route seed done.");
+  console.log("✅ Route seed done.");
 }
 
 main()
+  .catch(console.error)
   .finally(async () => prisma.$disconnect());
