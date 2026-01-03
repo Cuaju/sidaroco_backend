@@ -10,7 +10,7 @@ datasource db {
 model Ticket {
   id         Int      @id @default(autoincrement())
   tripId     Int      @map("trip_id")
-  userId     Int      @map("user_id")
+  userId     String   @map("user_id")
   seatNumber Int      @map("seat_number")
   price      Float
   status     String   @default("ACTIVE")

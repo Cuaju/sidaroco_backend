@@ -2,7 +2,7 @@ import "dotenv/config";
 import prisma from "./db/prisma";
 
 async function main() {
-  const userId = 1;
+  const userId = "cmjn5uoqd0001zw9w6034yll9";
   const now = new Date();
 
   const pastTripDate = new Date(now);

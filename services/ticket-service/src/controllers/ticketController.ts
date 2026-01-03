@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as TicketService from "../services/ticketService";
+import prisma from "../db/prisma";
 
 export async function createTicket(req: Request, res: Response) {
   try {
@@ -11,12 +12,24 @@ export async function createTicket(req: Request, res: Response) {
 
     const ticketData = {
       tripId: Number(tripId),
-      userId: Number(userId),
+      userId: String(userId),
       seatNumber: Number(seatNumber),
       price: Number(price),
       status: status ?? "ACTIVE",
       saleDate: new Date(saleDate),
     };
+
+    const existing = await prisma.ticket.findFirst({
+      where: {
+        tripId: Number(tripId),
+        seatNumber: Number(seatNumber),
+      },
+    });
+
+
+    if (existing) {
+      return res.status(409).json({ message: "Seat already sold" });
+    }
 
     const newTicket = await TicketService.createTicket(ticketData);
     res.status(201).json(newTicket);
@@ -44,7 +57,7 @@ export async function getTicketById(req: Request, res: Response) {
 
 export async function getTicketsByUser(req: Request, res: Response) {
   try {
-    const userId = Number(req.params.userId);
+    const userId = String(req.params.userId);
     const tickets = await TicketService.getTicketsByUser(userId);
     res.json(tickets);
   } catch (error) {
@@ -69,7 +82,7 @@ export async function updateTicket(req: Request, res: Response) {
 
     const ticketData = {
       tripId: req.body.tripId ? Number(req.body.tripId) : undefined,
-      userId: req.body.userId ? Number(req.body.userId) : undefined,
+      userId: req.body.userId ? String(req.body.userId) : undefined,
       seatNumber: req.body.seatNumber ? Number(req.body.seatNumber) : undefined,
       price: req.body.price ? Number(req.body.price) : undefined,
       status: req.body.status,

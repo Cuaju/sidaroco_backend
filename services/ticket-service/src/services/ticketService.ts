@@ -11,7 +11,7 @@ export async function getTicketById(id: number): Promise<Ticket | null> {
   return prisma.ticket.findUnique({ where: { id } });
 }
 
-export async function getTicketsByUser(userId: number): Promise<Ticket[]> {
+export async function getTicketsByUser(userId: string): Promise<Ticket[]> {
   return prisma.ticket.findMany({ where: { userId } });
 }
 
