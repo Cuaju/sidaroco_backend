@@ -4,7 +4,7 @@ import prisma from "../db/prisma";
 
 export async function createTicket(req: Request, res: Response) {
   try {
-    const { tripId, userId, seatNumber, price, status, saleDate } = req.body;
+    const { tripId, userId, seatNumber, price, status, saleDate, passengerName, paymentMethod } = req.body;
 
     if (!saleDate || isNaN(Date.parse(saleDate))) {
       return res.status(400).json({ message: "Invalid saleDate" });
@@ -17,6 +17,8 @@ export async function createTicket(req: Request, res: Response) {
       price: Number(price),
       status: status ?? "ACTIVE",
       saleDate: new Date(saleDate),
+      passengerName: passengerName ?? null,
+      paymentMethod: paymentMethod ?? null,
     };
 
     const existing = await prisma.ticket.findFirst({

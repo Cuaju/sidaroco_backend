@@ -91,6 +91,7 @@ services:
       - ./services/ticket-service/.env
     environment:
       TICKET_SERVICE_PORT: 3004
+      SCHEDULE_SERVICE_URL: http://schedule-service:3006
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_ticket
       AUTH_SERVICE_URL: http://authentication-service:3000
       CORS_DOMAIN: www.sidaroco.com

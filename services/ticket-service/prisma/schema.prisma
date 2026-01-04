@@ -15,7 +15,9 @@ model Ticket {
   price      Float
   status     String   @default("ACTIVE")
   saleDate   DateTime @map("sale_date")
-
+  passengerName String?   @map("passenger_name")
+  paymentMethod String?   @map("payment_method")
+  
   createdAt  DateTime @map("created_at") @default(now())
   updatedAt  DateTime @map("updated_at") @updatedAt
 
