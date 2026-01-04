@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { RouteService } from "../services/route.service";
-
+import { uploadToS3, getSignedUrlForKey } from "../utils/s3"
 const isNum = (v: any) => typeof v === "number" && Number.isFinite(v);
 
 export class RouteController {
@@ -10,8 +10,14 @@ export class RouteController {
       const skip = req.query.skip ? Number(req.query.skip) : 0;
       const take = req.query.take ? Number(req.query.take) : 50;
       const q = req.query.q ? String(req.query.q) : undefined;
-
+  
       const routes = await RouteService.list({ skip, take, q });
+      for (const route of routes) {
+        if (route.photoKey) {
+          route.photoKey = await getSignedUrlForKey(route.photoKey);
+        }
+      }
+  
       return res.json(routes);
     } catch (e: any) {
       return res.status(500).json({
@@ -20,11 +26,10 @@ export class RouteController {
       });
     }
   }
-
-  static async getById(req: Request, res: Response) {
+  static async toggleFeatured(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-
+  
       if (!Number.isInteger(id)) {
         return res.status(400).json({ message: "invalid id" });
       }
@@ -33,7 +38,48 @@ export class RouteController {
       if (!route) {
         return res.status(404).json({ message: "not found" });
       }
-
+      const updated = await RouteService.update(id, {
+        featured: !route.featured,
+      });
+  
+     
+      return res.json(updated);
+    } catch (e: any) {
+      return res.status(500).json({
+        message: "internal error",
+        detail: e?.message,
+      });
+    }
+  }
+  
+  static async getFeatured(req: Request, res: Response) {
+    try {
+      const routes = await RouteService.getFeatured();
+      return res.json(routes);
+    } catch (e: any) {
+      return res.status(500).json({
+        message: "internal error",
+        detail: e?.message,
+      });
+    }
+  }
+  
+  static async getById(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+  
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ message: "invalid id" });
+      }
+  
+      const route = await RouteService.getById(id);
+      if (!route) {
+        return res.status(404).json({ message: "not found" });
+      }
+      if (route.photoKey) {
+        route.photoKey = await getSignedUrlForKey(route.photoKey);
+      }
+  
       return res.json(route);
     } catch (e: any) {
       return res.status(500).json({
@@ -42,136 +88,101 @@ export class RouteController {
       });
     }
   }
-
+  
   static async create(req: Request, res: Response) {
     try {
-      const { name, origin, destination, ticketPrice } = req.body ?? {};
-
-      if (!name) {
-        return res.status(400).json({ message: "name is required" });
+      const { name, ticketPrice, featured } = req.body;
+      const origin =
+        typeof req.body.origin === "string"
+          ? JSON.parse(req.body.origin)
+          : req.body.origin;
+  
+      const destination =
+        typeof req.body.destination === "string"
+          ? JSON.parse(req.body.destination)
+          : req.body.destination;
+  
+      let photoKey: string | undefined;
+  
+      if (req.file) {
+        photoKey = await uploadToS3(req.file, "routes");
       }
-
-      if (!isNum(ticketPrice)) {
-        return res
-          .status(400)
-          .json({ message: "ticketPrice must be a valid number" });
-      }
-
-      if (!origin?.name) {
-        return res.status(400).json({ message: "origin.name is required" });
-      }
-      if (!isNum(origin.lat)) {
-        return res.status(400).json({ message: "origin.lat must be number" });
-      }
-      if (!isNum(origin.lng)) {
-        return res.status(400).json({ message: "origin.lng must be number" });
-      }
-
-      if (!destination?.name) {
-        return res
-          .status(400)
-          .json({ message: "destination.name is required" });
-      }
-      if (!isNum(destination.lat)) {
-        return res
-          .status(400)
-          .json({ message: "destination.lat must be number" });
-      }
-      if (!isNum(destination.lng)) {
-        return res
-          .status(400)
-          .json({ message: "destination.lng must be number" });
-      }
-
+  
       const created = await RouteService.create({
         name,
-        ticketPrice,
+        ticketPrice: ticketPrice ? Number(ticketPrice) : undefined,
+        featured: featured === "true",
+        photoKey,
         origin,
         destination,
       });
-
+  
+      if (created.photoKey) {
+        created.photoKey = await getSignedUrlForKey(created.photoKey);
+      }
+  
       return res.status(201).json(created);
     } catch (e: any) {
-      console.error(e);
-
-      if (e?.code === "P2002") {
-        return res.status(409).json({
-          message: "route already exists (same origin and destination)",
-        });
-      }
-
       return res.status(500).json({
         message: "internal error",
         detail: e?.message,
       });
     }
   }
-
+  
+  
   static async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const { name, origin, destination, ticketPrice } = req.body ?? {};
-
       if (!Number.isInteger(id)) {
         return res.status(400).json({ message: "invalid id" });
       }
-
-      if (!name) {
-        return res.status(400).json({ message: "name is required" });
+  
+      let photoKey: string | undefined;
+      if (req.file) {
+        photoKey = await uploadToS3(req.file, "routes");
       }
-
-      if (!isNum(ticketPrice)) {
-        return res
-          .status(400)
-          .json({ message: "ticketPrice must be a valid number" });
+      const updateData: any = {};
+  
+      if (req.body.name) updateData.name = req.body.name;
+      if (req.body.ticketPrice) updateData.ticketPrice = Number(req.body.ticketPrice);
+      
+      if (typeof req.body.featured === "boolean") {
+        updateData.featured = req.body.featured;
+      } else if (req.body.featured === "true" || req.body.featured === "false") {
+        updateData.featured = req.body.featured === "true";
       }
-
-      if (!origin?.name) {
-        return res.status(400).json({ message: "origin.name is required" });
+  
+      if (photoKey) updateData.photoKey = photoKey;
+  
+      if (req.body.origin) {
+        updateData.origin =
+          typeof req.body.origin === "string" ? JSON.parse(req.body.origin) : req.body.origin;
       }
-      if (!isNum(origin.lat)) {
-        return res.status(400).json({ message: "origin.lat must be number" });
+  
+      if (req.body.destination) {
+        updateData.destination =
+          typeof req.body.destination === "string"
+            ? JSON.parse(req.body.destination)
+            : req.body.destination;
       }
-      if (!isNum(origin.lng)) {
-        return res.status(400).json({ message: "origin.lng must be number" });
+  
+      const updated = await RouteService.update(id, updateData);
+  
+      if (updated.photoKey) {
+        updated.photoKey = await getSignedUrlForKey(updated.photoKey);
       }
-
-      if (!destination?.name) {
-        return res
-          .status(400)
-          .json({ message: "destination.name is required" });
-      }
-      if (!isNum(destination.lat)) {
-        return res
-          .status(400)
-          .json({ message: "destination.lat must be number" });
-      }
-      if (!isNum(destination.lng)) {
-        return res
-          .status(400)
-          .json({ message: "destination.lng must be number" });
-      }
-
-      const updated = await RouteService.update(id, {
-        name,
-        ticketPrice,
-        origin,
-        destination,
-      });
-
+  
       return res.json(updated);
     } catch (e: any) {
-      if (String(e?.code) === "P2025") {
-        return res.status(404).json({ message: "not found" });
-      }
-
       return res.status(500).json({
         message: "internal error",
         detail: e?.message,
       });
     }
   }
-
+  
+  
   static async remove(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
