@@ -45,4 +45,6 @@ router.post("/:date/trip/:tripId/cancel", ScheduleController.cancelTripInSchedul
 // Complete a trip
 router.post("/:date/trip/:tripId/complete", ScheduleController.completeTripInSchedule);
 
+router.get("/byId/:id", ScheduleController.getScheduleById);
+
 export default router;

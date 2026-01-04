@@ -497,3 +497,26 @@ export async function getSchedulesInRange(req: Request, res: Response) {
     res.status(500).json({ message: "Failed to fetch schedules in range" });
   }
 }
+
+export async function getScheduleById(req: Request, res: Response) {
+  try{
+    const scheduleId = Number(req.params.id);
+
+    if (isNaN(scheduleId)) {
+      return res.status(400).json({ message: "Invalid schedule ID" });
+    }
+
+    const schedule = await ScheduleService.getScheduleById(scheduleId);
+
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    res.status(200).json(schedule);
+
+  }catch (error) {
+    console.error("Error fetching schedule by ID:", error);
+    res.status(500).json({ message: "Failed to fetch schedule by ID" });
+  }
+
+}
