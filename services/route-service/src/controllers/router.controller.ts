@@ -53,15 +53,23 @@ export class RouteController {
   }
   
   static async getFeatured(req: Request, res: Response) {
-    try {
-      const routes = await RouteService.getFeatured();
-      return res.json(routes);
-    } catch (e: any) {
-      return res.status(500).json({
-        message: "internal error",
-        detail: e?.message,
-      });
-    }
+  try {
+    const routes = await RouteService.getFeatured();
+
+    const out = await Promise.all(
+      routes.map(async (r: any) => ({
+        ...r,
+        photoUrl: r.photoKey ? await getSignedUrlForKey(r.photoKey) : null,
+      }))
+    );
+
+    return res.json(out);
+  } catch (e: any) {
+    return res.status(500).json({
+      message: "internal error",
+      detail: e?.message,
+    });
+  }
   }
   
   static async getById(req: Request, res: Response) {
