@@ -2,7 +2,10 @@ import prisma from "../db/prisma";
 
 async function getScheduleRange(from: Date, to: Date, authHeader?: string) {
   const baseUrl = process.env.SCHEDULE_SERVICE_URL!;
-  const url = `${baseUrl}/schedule/range?from=${from.toISOString().slice(0,10)}&to=${to.toISOString().slice(0,10)}`;
+  const url =
+  `${baseUrl}/schedule/range` +
+  `?from=${toLocalDateString(from)}` +
+  `&to=${toLocalDateString(to)}`;
 
   const res = await fetch(url, {
     headers: authHeader ? { Authorization: authHeader } : {},
@@ -14,6 +17,14 @@ async function getScheduleRange(from: Date, to: Date, authHeader?: string) {
 
   return res.json();
 }
+
+function toLocalDateString(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 
 export async function getDailyTicketReport(date: Date, authHeader?: string) {
   const start = new Date(date);
