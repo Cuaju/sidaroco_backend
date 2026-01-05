@@ -4,8 +4,8 @@ const { Authorize } = require ("@sidaroco/auth_middleware");
 
 const router = Router();
 
-router.get("/tickets/daily", Authorize(), ReportController.getDailyTicketReport);
-router.get("/earnings/monthly", ReportController.getMonthlyEarningsReport);
-router.get("/earnings/monthly/by-route",ReportController.getMonthlyRouteReport);
+router.get("/tickets/daily", Authorize({roles:["FinanceManager"]}), ReportController.getDailyTicketReport);
+router.get("/earnings/monthly", Authorize({roles:["FinanceManager"]}),ReportController.getMonthlyEarningsReport);
+router.get("/earnings/monthly/by-route",Authorize({roles:["FinanceManager"]}),ReportController.getMonthlyRouteReport);
 
 export default router;
