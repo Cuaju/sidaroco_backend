@@ -12,9 +12,10 @@ export async function getAvailableSchedules(req: Request, res: Response) {
     return res.status(400).json({ message: "routeId and date are required" });
   }
 
-  const response = await fetch(
-    `${SCHEDULE_SERVICE_URL}/schedule/${date}`
-  );
+  const authHeader = req.header("authorization");
+  const response = await fetch(`${SCHEDULE_SERVICE_URL}/schedule/${date}`, {
+    headers: authHeader ? { Authorization: authHeader } : {},
+  });
 
   if (response.status === 404) {
     return res.json([]);
@@ -52,9 +53,10 @@ export async function selectSchedule(req: Request, res: Response) {
     return res.status(400).json({ message: "Missing data" });
   }
 
-  const response = await fetch(
-    `${SCHEDULE_SERVICE_URL}/schedule/${date}`
-  );
+  const authHeader = req.header("authorization");
+  const response = await fetch(`${SCHEDULE_SERVICE_URL}/schedule/${date}`, {
+    headers: authHeader ? { Authorization: authHeader } : {},
+  });
 
   if (!response.ok) {
     return res.status(502).json({ message: "Schedule service unavailable" });
