@@ -9,9 +9,39 @@ export class RouteController {
     try {
       const skip = req.query.skip ? Number(req.query.skip) : 0;
       const take = req.query.take ? Number(req.query.take) : 50;
-      const q = req.query.q ? String(req.query.q) : undefined;
   
-      const routes = await RouteService.list({ skip, take, q });
+      const q = req.query.q ? String(req.query.q) : undefined;
+      const origin = req.query.origin ? String(req.query.origin) : undefined;
+      const destination = req.query.destination
+        ? String(req.query.destination)
+        : undefined;
+  
+      const featured =
+        req.query.featured === "true"
+          ? true
+          : req.query.featured === "false"
+          ? false
+          : undefined;
+  
+      const minPrice = req.query.minPrice
+        ? Number(req.query.minPrice)
+        : undefined;
+  
+      const maxPrice = req.query.maxPrice
+        ? Number(req.query.maxPrice)
+        : undefined;
+  
+      const routes = await RouteService.list({
+        skip,
+        take,
+        q,
+        origin,
+        destination,
+        featured,
+        minPrice,
+        maxPrice,
+      });
+  
       for (const route of routes) {
         if (route.photoKey) {
           route.photoKey = await getSignedUrlForKey(route.photoKey);
@@ -26,6 +56,7 @@ export class RouteController {
       });
     }
   }
+  
   static async toggleFeatured(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
