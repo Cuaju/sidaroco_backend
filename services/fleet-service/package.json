@@ -19,6 +19,7 @@
     "@aws-sdk/s3-request-presigner": "^3.958.0",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
+    "@sidaroco/auth_middleware": "workspace:*",
     "@sidaroco/contracts": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
