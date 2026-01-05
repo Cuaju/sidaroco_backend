@@ -4,11 +4,20 @@ import * as ReportService from "../services/reportService";
 export async function getDailyTicketReport(req: Request, res: Response) {
   const { date } = req.query;
 
-  if (!date || isNaN(Date.parse(date as string))) {
+  if (typeof date !== "string") {
     return res.status(400).json({ message: "Invalid date" });
   }
 
-  const report = await ReportService.getDailyTicketReport(new Date(date as string));
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    return res.status(400).json({ message: "Invalid date format" });
+  }
+
+  const report = await ReportService.getDailyTicketReport(
+    d,
+    req.header("authorization") ?? undefined
+  );
+
   res.json(report);
 }
 
@@ -21,7 +30,8 @@ export async function getMonthlyEarningsReport(req: Request, res: Response) {
 
   const report = await ReportService.getMonthlyEarningsReport(
     Number(year),
-    Number(month)
+    Number(month),
+    req.header("authorization") ?? undefined
   );
 
   res.json(report);
@@ -37,7 +47,8 @@ export async function getMonthlyRouteReport(req: Request, res: Response) {
   const report = await ReportService.getMonthlyRouteReport(
     Number(year),
     Number(month),
-    Number(routeId)
+    Number(routeId),
+    req.header("authorization") ?? undefined
   );
 
   res.json(report);
