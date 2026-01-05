@@ -1,6 +1,21 @@
 import prisma from "../db/prisma";
 
-export async function getDailyTicketReport(date: Date) {
+async function getScheduleRange(from: Date, to: Date, authHeader?: string) {
+  const baseUrl = process.env.SCHEDULE_SERVICE_URL!;
+  const url = `${baseUrl}/schedule/range?from=${from.toISOString().slice(0,10)}&to=${to.toISOString().slice(0,10)}`;
+
+  const res = await fetch(url, {
+    headers: authHeader ? { Authorization: authHeader } : {},
+  });
+
+  if (!res.ok) {
+    throw new Error("SCHEDULE_SERVICE_ERROR");
+  }
+
+  return res.json();
+}
+
+export async function getDailyTicketReport(date: Date, authHeader?: string) {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
 
@@ -8,13 +23,18 @@ export async function getDailyTicketReport(date: Date) {
   end.setHours(23, 59, 59, 999);
 
   const tickets = await prisma.ticket.findMany({
-    where: {
-      saleDate: { gte: start, lte: end },
-    },
+    where: { saleDate: { gte: start, lte: end } },
+    select: { price: true, tripId: true },
   });
 
-  const trips = await prisma.trip.findMany();
-  const tripToRoute = new Map(trips.map(t => [t.id, t.routeId]));
+  const schedules = await getScheduleRange(start, end, authHeader);
+
+  const tripToRoute = new Map<number, number>();
+  for (const s of schedules) {
+    for (const t of s.trips) {
+      tripToRoute.set(t.id, t.routeId);
+    }
+  }
 
   const byRoute: Record<number, { tickets: number; income: number }> = {};
 
@@ -26,7 +46,7 @@ export async function getDailyTicketReport(date: Date) {
       byRoute[routeId] = { tickets: 0, income: 0 };
     }
 
-    byRoute[routeId].tickets++;
+    byRoute[routeId].tickets += 1;
     byRoute[routeId].income += t.price;
   }
 
@@ -38,18 +58,27 @@ export async function getDailyTicketReport(date: Date) {
   };
 }
 
-export async function getMonthlyEarningsReport(year: number, month: number) {
+export async function getMonthlyEarningsReport(
+  year: number,
+  month: number,
+  authHeader?: string
+) {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0, 23, 59, 59, 999);
 
   const tickets = await prisma.ticket.findMany({
-    where: {
-      saleDate: { gte: start, lte: end },
-    },
+    where: { saleDate: { gte: start, lte: end } },
+    select: { price: true, tripId: true },
   });
 
-  const trips = await prisma.trip.findMany();
-  const tripToRoute = new Map(trips.map(t => [t.id, t.routeId]));
+  const schedules = await getScheduleRange(start, end, authHeader);
+
+  const tripToRoute = new Map<number, number>();
+  for (const s of schedules) {
+    for (const t of s.trips) {
+      tripToRoute.set(t.id, t.routeId);
+    }
+  }
 
   const byRoute: Record<number, { tickets: number; income: number }> = {};
 
@@ -61,7 +90,7 @@ export async function getMonthlyEarningsReport(year: number, month: number) {
       byRoute[routeId] = { tickets: 0, income: 0 };
     }
 
-    byRoute[routeId].tickets++;
+    byRoute[routeId].tickets += 1;
     byRoute[routeId].income += t.price;
   }
 
@@ -77,23 +106,29 @@ export async function getMonthlyEarningsReport(year: number, month: number) {
 export async function getMonthlyRouteReport(
   year: number,
   month: number,
-  routeId: number
+  routeId: number,
+  authHeader?: string
 ) {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0, 23, 59, 59, 999);
 
-  const trips = await prisma.trip.findMany({
-    where: { routeId },
-    select: { id: true },
-  });
+  const schedules = await getScheduleRange(start, end, authHeader);
 
-  const tripIds = trips.map(t => t.id);
+  const tripIds: number[] = [];
+  for (const s of schedules) {
+    for (const t of s.trips) {
+      if (t.routeId === routeId) {
+        tripIds.push(t.id);
+      }
+    }
+  }
 
   const tickets = await prisma.ticket.findMany({
     where: {
       tripId: { in: tripIds },
       saleDate: { gte: start, lte: end },
     },
+    select: { price: true },
   });
 
   return {
