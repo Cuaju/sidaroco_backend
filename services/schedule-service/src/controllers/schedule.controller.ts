@@ -518,5 +518,32 @@ export async function getScheduleById(req: Request, res: Response) {
     console.error("Error fetching schedule by ID:", error);
     res.status(500).json({ message: "Failed to fetch schedule by ID" });
   }
-
 }
+
+export async function getTripIdsInRange(req: Request, res: Response) {
+  try {
+    const { from, to } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({
+        message: "Both 'from' and 'to' query parameters are required",
+      });
+    }
+
+    const fromDate = new Date(from as string);
+    const toDate = new Date(to as string);
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid date format. Use YYYY-MM-DD",
+      });
+    }
+
+    const trips = await ScheduleService.getTripIdsInRange(fromDate, toDate);
+    res.status(200).json(trips);
+  } catch (error) {
+    console.error("Error fetching trip IDs in range:", error);
+    res.status(500).json({ message: "Failed to fetch trip IDs" });
+  }
+}
+

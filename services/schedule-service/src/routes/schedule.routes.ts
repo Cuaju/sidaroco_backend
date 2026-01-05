@@ -47,4 +47,6 @@ router.post("/:date/trip/:tripId/complete", ScheduleController.completeTripInSch
 
 router.get("/byId/:id", ScheduleController.getScheduleById);
 
+router.get("/trips/ids", ScheduleController.getTripIdsInRange);
+
 export default router;
