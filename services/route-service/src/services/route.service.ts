@@ -18,15 +18,63 @@ export type CreateRouteInput = {
 export type UpdateRouteInput = Partial<CreateRouteInput>;
 
 export class RouteService {
-  static async list(params?: { skip?: number; take?: number; q?: string }) {
-    const { skip = 0, take = 50, q } = params ?? {};
-
+  static async list(params?: {
+    skip?: number;
+    take?: number;
+    q?: string;
+    origin?: string;
+    destination?: string;
+    featured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+  }) {
+    const {
+      skip = 0,
+      take = 50,
+      q,
+      origin,
+      destination,
+      featured,
+      minPrice,
+      maxPrice,
+    } = params ?? {};
+  
     return prisma.route.findMany({
       skip,
       take,
-      where: q
-        ? { name: { contains: q, mode: "insensitive" } }
-        : undefined,
+      where: {
+        AND: [
+          q
+            ? { name: { contains: q, mode: "insensitive" } }
+            : {},
+  
+          origin
+            ? {
+                origin: {
+                  name: { contains: origin, mode: "insensitive" },
+                },
+              }
+            : {},
+  
+          destination
+            ? {
+                destination: {
+                  name: { contains: destination, mode: "insensitive" },
+                },
+              }
+            : {},
+  
+          typeof featured === "boolean" ? { featured } : {},
+  
+          minPrice !== undefined
+            ? { ticketPrice: { gte: minPrice } }
+            : {},
+  
+          maxPrice !== undefined
+            ? { ticketPrice: { lte: maxPrice } }
+            : {},
+        ],
+      },
       include: {
         origin: true,
         destination: true,
@@ -34,6 +82,7 @@ export class RouteService {
       orderBy: { createdAt: "desc" },
     });
   }
+  
 
   static async getById(id: number) {
     return prisma.route.findUnique({
