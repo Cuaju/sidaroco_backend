@@ -3,7 +3,7 @@ import prisma from "../db/prisma";
 async function getScheduleRange(from: Date, to: Date, authHeader?: string) {
   const baseUrl = process.env.SCHEDULE_SERVICE_URL!;
   const url =
-  `${baseUrl}/schedule/range` +
+  `${baseUrl}/schedule/trips/ids` +
   `?from=${toLocalDateString(from)}` +
   `&to=${toLocalDateString(to)}`;
 

@@ -275,3 +275,45 @@ export async function getSchedulesInRange(
     isLocked: s.isLocked,
   }));
 }
+
+export async function getTripIdsInRange(
+  from: Date,
+  to: Date
+): Promise<
+  {
+    tripId: number;
+    routeId: number;
+    serviceDate: string;
+  }[]
+> {
+  const trips = await prisma.scheduledTrip.findMany({
+    where: {
+      dailySchedule: {
+        serviceDate: {
+          gte: from,
+          lte: to,
+        },
+      },
+    },
+    select: {
+      id: true,
+      routeId: true,
+      dailySchedule: {
+        select: {
+          serviceDate: true,
+        },
+      },
+    },
+    orderBy: {
+      dailySchedule: { serviceDate: "asc" },
+    },
+  });
+
+  return trips.map(t => ({
+    tripId: t.id,
+    routeId: t.routeId,
+    serviceDate: t.dailySchedule.serviceDate
+      .toISOString()
+      .split("T")[0],
+  }));
+}
