@@ -519,7 +519,6 @@ export async function getScheduleById(req: Request, res: Response) {
     res.status(500).json({ message: "Failed to fetch schedule by ID" });
   }
 }
-
 export async function getTripIdsInRange(req: Request, res: Response) {
   try {
     const { from, to } = req.query;
@@ -530,16 +529,28 @@ export async function getTripIdsInRange(req: Request, res: Response) {
       });
     }
 
-    const fromDate = new Date(from as string);
-    const toDate = new Date(to as string);
-
-    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from as string) || !/^\d{4}-\d{2}-\d{2}$/.test(to as string)) {
       return res.status(400).json({
         message: "Invalid date format. Use YYYY-MM-DD",
       });
     }
 
+    // Construir fechas UTC medianoche
+    const fromDate = parseUTCDate(from as string);
+    const toDate = parseUTCDate(to as string);
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid date",
+      });
+    }
+
+    console.log("Schedule getTripIdsInRange - Date range:", { fromDate, toDate, from, to }); // Debug
+
     const trips = await ScheduleService.getTripIdsInRange(fromDate, toDate);
+    
+    console.log("Schedule getTripIdsInRange - Trips found:", trips.length); // Debug
+
     res.status(200).json(trips);
   } catch (error) {
     console.error("Error fetching trip IDs in range:", error);
@@ -547,3 +558,6 @@ export async function getTripIdsInRange(req: Request, res: Response) {
   }
 }
 
+function parseUTCDate(dateString: string): Date {
+  return new Date(`${dateString}T00:00:00.000Z`);
+}

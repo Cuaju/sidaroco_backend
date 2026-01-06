@@ -1,91 +1,86 @@
 import { Request, Response } from "express";
 import * as TripService from "../services/tripService";
-
-const SCHEDULE_SERVICE_URL =
-  process.env.SCHEDULE_SERVICE_URL || "http://localhost:3006";
+import { scheduleGetDaySchedule } from "../utils/scheduleClient";
 
 export async function getAvailableSchedules(req: Request, res: Response) {
-  const routeId = Number(req.params.routeId);
-  const date = String(req.query.date);
+  try {
+    const routeId = Number(req.params.routeId);
+    const date = String(req.query.date);
 
-  if (Number.isNaN(routeId) || !date) {
-    return res.status(400).json({ message: "routeId and date are required" });
+    if (Number.isNaN(routeId) || !date) {
+      return res.status(400).json({ message: "routeId and date are required" });
+    }
+
+    const authHeader = req.header("authorization");
+
+    const schedule = await scheduleGetDaySchedule(date, authHeader);
+
+    if (!schedule) {
+      return res.json([]);
+    }
+
+    const hours = schedule.trips
+      .filter((t) => t.routeId === routeId && t.departureTime)
+      .map((t) => {
+        const d = new Date(t.departureTime);
+        if (isNaN(d.getTime())) return null;
+        return {
+          hour: d.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+        };
+      })
+      .filter(Boolean);
+
+    res.json(hours);
+  } catch (error) {
+    console.error("Error in getAvailableSchedules:", error);
+    res.status(502).json({ message: "Schedule service unavailable" });
   }
-
-  const authHeader = req.header("authorization");
-  const response = await fetch(`${SCHEDULE_SERVICE_URL}/schedule/${date}`, {
-    headers: authHeader ? { Authorization: authHeader } : {},
-  });
-
-  if (response.status === 404) {
-    return res.json([]);
-  }
-
-  if (!response.ok) {
-    return res.status(502).json({ message: "Schedule service unavailable" });
-  }
-
-  const schedule = await response.json();
-
-  const hours = schedule.trips
-    .filter((t: any) => t.routeId === routeId && t.departureTime)
-    .map((t: any) => {
-      const d = new Date(t.departureTime);
-      if (isNaN(d.getTime())) return null;
-      return {
-        hour: d.toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }),
-      };
-    })
-    .filter(Boolean);
-
-
-  res.json(hours);
 }
 
 export async function selectSchedule(req: Request, res: Response) {
-  const { routeId, date, hour } = req.body;
+  try {
+    const { routeId, date, hour } = req.body;
 
-  if (!routeId || !date || !hour) {
-    return res.status(400).json({ message: "Missing data" });
-  }
+    if (!routeId || !date || !hour) {
+      return res.status(400).json({ message: "Missing data" });
+    }
 
-  const authHeader = req.header("authorization");
-  const response = await fetch(`${SCHEDULE_SERVICE_URL}/schedule/${date}`, {
-    headers: authHeader ? { Authorization: authHeader } : {},
-  });
+    const authHeader = req.header("Authorization");
 
-  if (!response.ok) {
-    return res.status(502).json({ message: "Schedule service unavailable" });
-  }
+    const schedule = await scheduleGetDaySchedule(date, authHeader);
 
-  const schedule = await response.json();
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found for this date" });
+    }
 
-  const trip = schedule.trips.find((t: any) => {
-    if (Number(t.routeId) !== Number(routeId)) return false;
+    const trip = schedule.trips.find((t) => {
+      if (Number(t.routeId) !== Number(routeId)) return false;
 
-    const d = new Date(t.departureTime);
-    if (isNaN(d.getTime())) return false;
+      const d = new Date(t.departureTime);
+      if (isNaN(d.getTime())) return false;
 
-    const h = d.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
+      const h = d.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+
+      return h === hour;
     });
 
-    return h === hour;
-  });
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
 
-
-
-  if (!trip) {
-    return res.status(404).json({ message: "Trip not found" });
+    res.json(trip);
+  } catch (error) {
+    console.error("Error in selectSchedule:", error);
+    res.status(502).json({ message: "Schedule service unavailable" });
   }
-
-  res.json(trip);
 }
 
 export async function getTripsByIds(req: Request, res: Response) {
@@ -107,33 +102,44 @@ export async function getTripsByIds(req: Request, res: Response) {
 
     const trips = await TripService.getTrips(tripIds);
     return res.json(trips);
-  } catch {
+  } catch (error) {
+    console.error("Error in getTripsByIds:", error);
     return res.status(500).json({ message: "Error fetching trips" });
   }
 }
 
 export async function getTripsByRoute(req: Request, res: Response) {
-  const { routeId, date } = req.query;
+  try {
+    const { routeId, date } = req.query;
 
-  if (!routeId || !date) {
-    return res.status(400).json({ message: "routeId and date are required" });
+    if (!routeId || !date) {
+      return res.status(400).json({ message: "routeId and date are required" });
+    }
+
+    const trips = await TripService.getTripsByRoute(
+      Number(routeId),
+      new Date(String(date))
+    );
+
+    res.json(trips);
+  } catch (error) {
+    console.error("Error in getTripsByRoute:", error);
+    res.status(500).json({ message: "Error fetching trips by route" });
   }
-
-  const trips = await TripService.getTripsByRoute(
-    Number(routeId),
-    new Date(String(date))
-  );
-
-  res.json(trips);
 }
 
 export async function getTicketsByTrip(req: Request, res: Response) {
-  const tripId = Number(req.params.tripId);
+  try {
+    const tripId = Number(req.params.tripId);
 
-  if (Number.isNaN(tripId)) {
-    return res.status(400).json({ message: "Invalid tripId" });
+    if (Number.isNaN(tripId)) {
+      return res.status(400).json({ message: "Invalid tripId" });
+    }
+
+    const tickets = await TripService.getTicketsByTrip(tripId);
+    res.json(tickets);
+  } catch (error) {
+    console.error("Error in getTicketsByTrip:", error);
+    res.status(500).json({ message: "Error fetching tickets" });
   }
-
-  const tickets = await TripService.getTicketsByTrip(tripId);
-  res.json(tickets);
 }

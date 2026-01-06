@@ -41,6 +41,8 @@ services:
       - ./services/fleet-service/.env
     environment:
       FLEET_SERVICE_PORT: 3001    
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_fleet
       AUTH_SERVICE_URL: http://authentication-service:3000
       ROUTE_SERVICE_URL: http://route-service:3003
@@ -50,6 +52,8 @@ services:
       - postgres
     ports:
       - "3001:3001"
+    volumes:
+      - ./packages/keys:/keys:ro
 
 
   mail-service:
@@ -64,6 +68,8 @@ services:
       CORS_DOMAIN: www.sidaroco.com
     ports:
       - "3002:3002"
+    volumes:
+      - ./packages/keys:/keys:ro
 
   route-service:
     build:
@@ -74,6 +80,8 @@ services:
       - ./services/route-service/.env
     environment:
       ROUTE_SERVICE_PORT: 3003
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_route
       AUTH_SERVICE_URL: http://authentication-service:3000
       CORS_DOMAIN: www.sidaroco.com
@@ -81,6 +89,8 @@ services:
       - postgres
     ports:
       - "3003:3003"
+    volumes:
+      - ./packages/keys:/keys:ro
 
   ticket-service:
     build:
@@ -91,6 +101,8 @@ services:
       - ./services/ticket-service/.env
     environment:
       TICKET_SERVICE_PORT: 3004
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       SCHEDULE_SERVICE_URL: http://schedule-service:3006
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_ticket
       AUTH_SERVICE_URL: http://authentication-service:3000
@@ -99,6 +111,8 @@ services:
       - postgres
     ports:
       - "3004:3004"
+    volumes:
+      - ./packages/keys:/keys:ro
 
   users-service:
     build:
@@ -132,6 +146,8 @@ services:
       - ./services/schedule-service/.env
     environment:
       SCHEDULE_SERVICE_PORT: 3006
+      JWT_PRIVATE_KEY_PATH: /keys/private.key
+      JWT_PUBLIC_KEY_PATH: /keys/public.key
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_schedule
       AUTH_SERVICE_URL: http://authentication-service:3000
       ROUTE_SERVICE_URL: http://route-service:3003
@@ -141,6 +157,8 @@ services:
       - postgres
     ports:
       - "3006:3006"
+    volumes:
+      - ./packages/keys:/keys:ro
 
     
 
