@@ -157,7 +157,7 @@ services:
       - postgres
     ports:
       - "3006:3006"
-      volumes:
+    volumes:
       - ./packages/keys:/keys:ro
 
     
