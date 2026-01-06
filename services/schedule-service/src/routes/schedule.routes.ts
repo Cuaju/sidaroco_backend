@@ -16,7 +16,7 @@ router.get("/trip/:tripId", Authorize({roles:["RouteManager", "FinanceManager", 
 router.post("/",Authorize({roles:["RouteManager"]}), ScheduleController.createEmptySchedule);
 
 // Get a full daily schedule for a day
-router.get("/:date", Authorize({roles:["RouteManager"]}), ScheduleController.getScheduleForDay);
+router.get("/:date", Authorize({roles:["RouteManager", "FinanceManager", "Customer", "Cashier"]}), ScheduleController.getScheduleForDay);
 
 // Duplicate a schedule from one day to another
 router.post("/:date/duplicate", Authorize({roles:["RouteManager"]}), ScheduleController.duplicateSchedule);
@@ -47,6 +47,6 @@ router.post("/:date/trip/:tripId/complete",Authorize({roles:["RouteManager"]}), 
 
 router.get("/byId/:id", Authorize({roles:["RouteManager", "Cashier", "Customer"]}), ScheduleController.getScheduleById);
 
-router.get("/trips/ids", Authorize({roles:["RouteManager", "FinanceManager"]}), ScheduleController.getTripIdsInRange);
+router.get("/trips/ids", Authorize({roles:["RouteManager", "FinanceManager", "Cashier", "Customer"]}), ScheduleController.getTripIdsInRange);
 
 export default router;
