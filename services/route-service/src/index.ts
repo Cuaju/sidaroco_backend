@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import express from "express";
 import { routeRouter } from "./routes/route.routes";
@@ -12,3 +13,4 @@ const port = Number(process.env.PORT || 3003);
 app.listen(port, () => {
   console.log(`route-service listening on http://localhost:${port}`);
 });
+

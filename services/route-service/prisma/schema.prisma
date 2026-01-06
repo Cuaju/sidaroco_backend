@@ -33,13 +33,15 @@ model Route {
 }
 
 model Location {
-  id             Int      @id @default(autoincrement())
-  name           String
-  lat            Float
-  lng            Float
+  id        Int     @id @default(autoincrement())
+
+  name      String          
+  fullName  String         
+  mapboxId  String @unique  
+
+  lat       Float
+  lng       Float
 
   originOf       Route[] @relation("RouteOrigin")
   destinationOf  Route[] @relation("RouteDestination")
-
-  @@unique([name, lat, lng], name: "location_name_lat_lng_unique")
 }

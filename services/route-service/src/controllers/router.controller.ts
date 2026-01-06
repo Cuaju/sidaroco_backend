@@ -7,8 +7,13 @@ export class RouteController {
 
   static async list(req: Request, res: Response) {
     try {
-      const skip = req.query.skip ? Number(req.query.skip) : 0;
-      const take = req.query.take ? Number(req.query.take) : 50;
+      const skip = req.query.skip !== undefined
+        ? Number(req.query.skip)
+        : undefined;
+  
+      const take = req.query.take !== undefined
+        ? Number(req.query.take)
+        : undefined;
   
       const q = req.query.q ? String(req.query.q) : undefined;
       const origin = req.query.origin ? String(req.query.origin) : undefined;
@@ -23,13 +28,15 @@ export class RouteController {
           ? false
           : undefined;
   
-      const minPrice = req.query.minPrice
-        ? Number(req.query.minPrice)
-        : undefined;
+      const minPrice =
+        req.query.minPrice !== undefined
+          ? Number(req.query.minPrice)
+          : undefined;
   
-      const maxPrice = req.query.maxPrice
-        ? Number(req.query.maxPrice)
-        : undefined;
+      const maxPrice =
+        req.query.maxPrice !== undefined
+          ? Number(req.query.maxPrice)
+          : undefined;
   
       const routes = await RouteService.list({
         skip,
@@ -56,6 +63,7 @@ export class RouteController {
       });
     }
   }
+  
   
   static async toggleFeatured(req: Request, res: Response) {
     try {
@@ -162,6 +170,19 @@ export class RouteController {
   
       return res.status(201).json(created);
     } catch (e: any) {
+  
+      if (e.code === "ROUTE_NAME_EXISTS") {
+        return res.status(409).json({
+          message: "ROUTE_NAME_EXISTS",
+        });
+      }
+  
+      if (e.code === "ROUTE_ORIGIN_DESTINATION_EXISTS") {
+        return res.status(409).json({
+          message: "ROUTE_ORIGIN_DESTINATION_EXISTS",
+        });
+      }
+  
       return res.status(500).json({
         message: "internal error",
         detail: e?.message,
@@ -214,11 +235,20 @@ export class RouteController {
   
       return res.json(updated);
     } catch (e: any) {
+      if (e.code === "ROUTE_NAME_EXISTS") {
+        return res.status(409).json({ message: "ROUTE_NAME_EXISTS" });
+      }
+    
+      if (e.code === "ROUTE_ORIGIN_DESTINATION_EXISTS") {
+        return res.status(409).json({ message: "ROUTE_ORIGIN_DESTINATION_EXISTS" });
+      }
+    
       return res.status(500).json({
         message: "internal error",
         detail: e?.message,
       });
     }
+    
   }
   
   

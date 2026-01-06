@@ -519,7 +519,6 @@ export async function getScheduleById(req: Request, res: Response) {
     res.status(500).json({ message: "Failed to fetch schedule by ID" });
   }
 }
-
 export async function getTripIdsInRange(req: Request, res: Response) {
   try {
     const { from, to } = req.query;

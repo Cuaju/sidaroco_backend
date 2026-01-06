@@ -1,10 +1,12 @@
 import prisma from "../db/prisma";
-
 export type LocationInput = {
+  mapboxId: string;
   name: string;
+  fullName: string;
   lat: number;
   lng: number;
 };
+
 
 export type CreateRouteInput = {
   name: string;
@@ -29,8 +31,8 @@ export class RouteService {
     maxPrice?: number;
   }) {
     const {
-      skip = 0,
-      take = 50,
+      skip,
+      take,
       q,
       origin,
       destination,
@@ -40,8 +42,9 @@ export class RouteService {
     } = params ?? {};
   
     return prisma.route.findMany({
-      skip,
-      take,
+      ...(typeof skip === "number" && { skip }),
+      ...(typeof take === "number" && { take }),
+  
       where: {
         AND: [
           q
@@ -64,7 +67,9 @@ export class RouteService {
               }
             : {},
   
-          typeof featured === "boolean" ? { featured } : {},
+          typeof featured === "boolean"
+            ? { featured }
+            : {},
   
           minPrice !== undefined
             ? { ticketPrice: { gte: minPrice } }
@@ -75,11 +80,15 @@ export class RouteService {
             : {},
         ],
       },
+  
       include: {
         origin: true,
         destination: true,
       },
-      orderBy: { createdAt: "desc" },
+  
+      orderBy: {
+        createdAt: "desc",
+      },
     });
   }
   
@@ -93,8 +102,42 @@ export class RouteService {
       },
     });
   }
-
   static async create(input: CreateRouteInput) {
+
+    const nameExists = await prisma.route.findFirst({
+      where: {
+        name: { equals: input.name, mode: "insensitive" },
+      },
+    });
+  
+    if (nameExists) {
+      const error: any = new Error("ROUTE_NAME_EXISTS");
+      error.code = "ROUTE_NAME_EXISTS";
+      throw error;
+    }
+    const origin = await prisma.location.findUnique({
+      where: { mapboxId: input.origin.mapboxId },
+    });
+  
+    const destination = await prisma.location.findUnique({
+      where: { mapboxId: input.destination.mapboxId },
+    });
+  
+    if (origin && destination) {
+      const routeExists = await prisma.route.findFirst({
+        where: {
+          originId: origin.id,
+          destinationId: destination.id,
+        },
+      });
+  
+      if (routeExists) {
+        const error: any = new Error("ROUTE_ORIGIN_DESTINATION_EXISTS");
+        error.code = "ROUTE_ORIGIN_DESTINATION_EXISTS";
+        throw error;
+      }
+    }
+  
     return prisma.route.create({
       data: {
         name: input.name,
@@ -104,27 +147,27 @@ export class RouteService {
   
         origin: {
           connectOrCreate: {
-            where: {
-              location_name_lat_lng_unique: {
-                name: input.origin.name,
-                lat: input.origin.lat,
-                lng: input.origin.lng,
-              },
+            where: { mapboxId: input.origin.mapboxId },
+            create: {
+              mapboxId: input.origin.mapboxId,
+              name: input.origin.name,
+              fullName: input.origin.fullName,
+              lat: input.origin.lat,
+              lng: input.origin.lng,
             },
-            create: input.origin,
           },
         },
   
         destination: {
           connectOrCreate: {
-            where: {
-              location_name_lat_lng_unique: {
-                name: input.destination.name,
-                lat: input.destination.lat,
-                lng: input.destination.lng,
-              },
+            where: { mapboxId: input.destination.mapboxId },
+            create: {
+              mapboxId: input.destination.mapboxId,
+              name: input.destination.name,
+              fullName: input.destination.fullName,
+              lat: input.destination.lat,
+              lng: input.destination.lng,
             },
-            create: input.destination,
           },
         },
       },
@@ -134,6 +177,7 @@ export class RouteService {
       },
     });
   }
+  
   
   static async getFeatured() {
     return prisma.route.findMany({
@@ -148,7 +192,9 @@ export class RouteService {
   static async update(id: number, input: UpdateRouteInput) {
     const cleanOrigin = input.origin
       ? {
+          mapboxId: input.origin.mapboxId,
           name: input.origin.name,
+          fullName: input.origin.fullName,
           lat: input.origin.lat,
           lng: input.origin.lng,
         }
@@ -156,11 +202,54 @@ export class RouteService {
   
     const cleanDestination = input.destination
       ? {
+          mapboxId: input.destination.mapboxId,
           name: input.destination.name,
+          fullName: input.destination.fullName,
           lat: input.destination.lat,
           lng: input.destination.lng,
         }
       : undefined;
+  
+    if (input.name) {
+      const nameExists = await prisma.route.findFirst({
+        where: {
+          name: { equals: input.name, mode: "insensitive" },
+          NOT: { id },
+        },
+      });
+  
+      if (nameExists) {
+        const error: any = new Error("ROUTE_NAME_EXISTS");
+        error.code = "ROUTE_NAME_EXISTS";
+        throw error;
+      }
+    }
+  
+    if (cleanOrigin && cleanDestination) {
+      const origin = await prisma.location.findUnique({
+        where: { mapboxId: cleanOrigin.mapboxId },
+      });
+  
+      const destination = await prisma.location.findUnique({
+        where: { mapboxId: cleanDestination.mapboxId },
+      });
+  
+      if (origin && destination) {
+        const routeExists = await prisma.route.findFirst({
+          where: {
+            originId: origin.id,
+            destinationId: destination.id,
+            NOT: { id },
+          },
+        });
+  
+        if (routeExists) {
+          const error: any = new Error("ROUTE_ORIGIN_DESTINATION_EXISTS");
+          error.code = "ROUTE_ORIGIN_DESTINATION_EXISTS";
+          throw error;
+        }
+      }
+    }
   
     return prisma.route.update({
       where: { id },
@@ -173,9 +262,7 @@ export class RouteService {
         ...(cleanOrigin && {
           origin: {
             connectOrCreate: {
-              where: {
-                location_name_lat_lng_unique: cleanOrigin,
-              },
+              where: { mapboxId: cleanOrigin.mapboxId },
               create: cleanOrigin,
             },
           },
@@ -184,9 +271,7 @@ export class RouteService {
         ...(cleanDestination && {
           destination: {
             connectOrCreate: {
-              where: {
-                location_name_lat_lng_unique: cleanDestination,
-              },
+              where: { mapboxId: cleanDestination.mapboxId },
               create: cleanDestination,
             },
           },
@@ -199,8 +284,6 @@ export class RouteService {
     });
   }
   
-  
-
   static async remove(id: number) {
     return prisma.route.delete({
       where: { id },

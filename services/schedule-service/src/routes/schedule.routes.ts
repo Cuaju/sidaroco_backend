@@ -47,6 +47,8 @@ router.post("/:date/trip/:tripId/complete",Authorize({roles:["RouteManager"]}), 
 
 router.get("/byId/:id", Authorize({roles:["RouteManager", "Cashier", "Customer"]}), ScheduleController.getScheduleById);
 
+router.get("/byId/:id", Authorize({roles:["RouteManager", "Cashier", "Customer"]}), ScheduleController.getScheduleById);
+
 router.get("/trips/ids", Authorize({roles:["RouteManager", "FinanceManager", "Cashier", "Customer"]}), ScheduleController.getTripIdsInRange);
 
 export default router;

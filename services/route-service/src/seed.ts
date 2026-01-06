@@ -3,46 +3,86 @@ import prisma from "./db/prisma";
 
 type LocationSeed = {
   key: string;
-  name: string;
-  lat: number;
-  lng: number;
+  query: string;
 };
 
+const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
+
+if (!MAPBOX_TOKEN) {
+  throw new Error("MAPBOX_TOKEN is missing");
+}
+
 const locations: LocationSeed[] = [
-  { key: "veracruz", name: "Veracruz", lat: 19.178645453727185, lng: -96.13434836498998 },
-  { key: "xalapa", name: "Xalapa", lat: 19.528187575718505, lng: -96.90313727180362 },
-  { key: "tierraBlanca", name: "Tierra Blanca", lat: 18.448913564073795, lng: -96.35839812627782 },
-  { key: "cordoba", name: "Córdoba", lat: 18.882455850916106, lng: -96.91948164103675 },
-  { key: "orizaba", name: "Orizaba", lat: 18.847513184664667, lng: -97.0994872034354 },
-  { key: "tuxpan", name: "Tuxpan", lat: 20.951100954403167, lng: -97.40232885437464 },
-  { key: "pozaRica", name: "Poza Rica", lat: 20.542209782054194, lng: -97.46789878560847 },
-  { key: "martinez", name: "Martínez de la Torre", lat: 20.064361129093943, lng: -97.0523908576863 },
-  { key: "coatzacoalcos", name: "Coatzacoalcos", lat: 18.12086186076124, lng: -94.44511376876935 },
-  { key: "minatitlan", name: "Minatitlán", lat: 17.98282132879945, lng: -94.54411313803439 },
-  { key: "sanAndres", name: "San Andrés Tuxtla", lat: 18.45162710057249, lng: -95.218565910028 },
-  { key: "coatepec", name: "Coatepec", lat: 19.44855411336902, lng: -96.95313953583194 },
-  { key: "papantla", name: "Papantla", lat: 20.451320280871737, lng: -97.31990293848338 },
-  { key: "acayucan", name: "Acayucan", lat: 17.94805066054034, lng: -94.90464619280439 },
-  { key: "lasChoapas", name: "Las Choapas", lat: 17.914593725609983, lng: -94.09264032574713 },
+  { key: "veracruz", query: "Veracruz, Veracruz, México" },
+  { key: "xalapa", query: "Xalapa-Enríquez, Veracruz, México" },
+  { key: "tierraBlanca", query: "Tierra Blanca, Veracruz, México" },
+  { key: "cordoba", query: "Córdoba, Veracruz, México" },
+  { key: "orizaba", query: "Orizaba, Veracruz, México" },
+  { key: "tuxpan", query: "Tuxpan de Rodríguez Cano, Veracruz, México" },
+  { key: "pozaRica", query: "Poza Rica de Hidalgo, Veracruz, México" },
+  { key: "martinez", query: "Martínez de la Torre, Veracruz, México" },
+  { key: "coatzacoalcos", query: "Coatzacoalcos, Veracruz, México" },
+  { key: "minatitlan", query: "Minatitlán, Veracruz, México" },
+  { key: "sanAndres", query: "San Andrés Tuxtla, Veracruz, México" },
+  { key: "coatepec", query: "Coatepec, Veracruz, México" },
+  { key: "papantla", query: "Papantla de Olarte, Veracruz, México" },
+  { key: "acayucan", query: "Acayucan, Veracruz, México" },
+  { key: "lasChoapas", query: "Las Choapas, Veracruz, México" },
 ];
 
+async function geocode(place: string) {
+  const res = await fetch(
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+      place
+    )}.json?access_token=${MAPBOX_TOKEN}&country=MX&limit=5`
+  );
+
+  const data = await res.json();
+
+  if (!data.features?.length) {
+    throw new Error(`Mapbox: no results for "${place}"`);
+  }
+
+  const feature =
+    data.features.find((f: any) => f.place_type.includes("place")) ||
+    data.features.find((f: any) => f.place_type.includes("locality")) ||
+    data.features.find((f: any) => f.place_type.includes("region")) ||
+    data.features[0];
+
+  const [lng, lat] = feature.center;
+
+  return {
+    mapboxId: feature.id,
+    name: feature.text,
+    fullName: feature.place_name,
+    lat,
+    lng,
+  };
+}
+
+
+function generateTicketPrice() {
+  const base = 80;
+  const variation = Math.floor(Math.random() * 220); 
+  return base + variation;
+}
+
 async function main() {
+  await prisma.route.deleteMany();
+  await prisma.location.deleteMany();
+
   const locMap: Record<string, number> = {};
 
   for (const loc of locations) {
-    const created = await prisma.location.upsert({
-      where: {
-        location_name_lat_lng_unique: {
-          name: loc.name,
-          lat: loc.lat,
-          lng: loc.lng,
-        },
-      },
-      update: {},
-      create: {
-        name: loc.name,
-        lat: loc.lat,
-        lng: loc.lng,
+    const geo = await geocode(loc.query);
+
+    const created = await prisma.location.create({
+      data: {
+        mapboxId: geo.mapboxId,
+        name: geo.name,
+        fullName: geo.fullName,
+        lat: geo.lat,
+        lng: geo.lng,
       },
     });
 
@@ -85,21 +125,17 @@ async function main() {
           destinationId: locMap[r.to],
         },
       },
-      
       update: {},
       create: {
-        name: `${locations.find(l => l.key === r.from)!.name} → ${
-          locations.find(l => l.key === r.to)!.name
-        }`,
+        name: `${r.from} → ${r.to}`,
         originId: locMap[r.from],
         destinationId: locMap[r.to],
-        ticketPrice: 0,
+        ticketPrice: generateTicketPrice(),
       },
     });
-    
   }
 
-  console.log("✅ Route seed done.");
+  console.log("Route seed done ");
 }
 
 main()
