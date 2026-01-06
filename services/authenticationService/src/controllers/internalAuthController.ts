@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { Prisma, UserType } from "@prisma/client";
-import { createAccount,findAccountById, updateAccountFields, updateAccountPasswordHash,   listAdminAccounts, setAccountActive, isAdminUserType, } from "../services/authService";
+import { createAccount,findAccountById, getAccountPublicById ,updateAccountFields, updateAccountPasswordHash,   listAdminAccounts, setAccountActive, isAdminUserType, } from "../services/authService";
 import { verifyPassword, hashPassword } from "../utils/hashing";
 
 function isNonEmpty(s: unknown): s is string {
@@ -23,6 +23,15 @@ function isAllowedUserType(user: unknown): user is AllowedUserType {
 }
 function isAllowedAdminUserType(v: unknown): v is AllowedAdminUserType {
   return typeof v === "string" && (allowedAdminUserTypes as readonly string[]).includes(v);
+}
+
+export async function getAccount(req: Request, res: Response) {
+  const { id } = req.params;
+
+  const account = await getAccountPublicById(id);
+  if (!account) return res.status(404).json({ message: "account not found" });
+
+  return res.status(200).json({ account });
 }
 
 export async function createNewAccountHashed(req: Request, res: Response) {

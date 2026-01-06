@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { Prisma } from "../generated/prisma/client";
-import { authCreateAccount, authPatchAccount, authPatchPassword , authGetAdminAccounts, authSetAdminActive, authCreateAdminAccount} from "../utils/authClient";
+import { authCreateAccount, authGetAccount,authPatchAccount, authPatchPassword , authGetAdminAccounts, authSetAdminActive, authCreateAdminAccount} from "../utils/authClient";
 import { createProfile, getProfileByAccountId, updateProfileByAccountId, getProfilesByAccountIds } from "../services/usersService";
 import { requestCode, verifyCodeAndCreateAccount } from "../services/emailTokenService";
 
@@ -186,10 +186,18 @@ export async function createProfileForExistingAccount(req: Request, res: Respons
 // GET /api/users/me
 export async function getMe(req: Request, res: Response) {
   const accountId = req.user?.id;
-  if (!accountId) return res.status(401).json({ message: "unauthorized" });
+  const authHeader = req.headers.authorization;
 
-  const profile = await getProfileByAccountId(accountId);
-  return res.status(200).json({ profile });
+  if (!accountId || !authHeader) {
+    return res.status(401).json({ message: "unauthorized" });
+  }
+
+  const [{ account }, profile] = await Promise.all([
+    authGetAccount(accountId, authHeader),
+    getProfileByAccountId(accountId),
+  ]);
+
+  return res.status(200).json({ account, profile });
 }
 
 // PATCH /api/users/me  (profile + optional account patch)

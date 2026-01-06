@@ -108,6 +108,20 @@ export async function authPatchAccount(
   return r.json();
 }
 
+export async function authGetAccount(accountId: string, authHeader: string) {
+  const baseUrl = process.env.AUTH_SERVICE_URL;
+  if (!baseUrl) throw new Error("AUTH_SERVICE_URL is missing");
+
+  const r = await fetch(`${baseUrl}/api/internal/accounts/${accountId}`, {
+    method: "GET",
+    headers: { Authorization: authHeader },
+  });
+
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.message || `authGetAccount failed: ${r.status}`);
+  return data; 
+}
+
 export async function authCreateAccountHashed(payload: {
   email: string;
   username: string;
