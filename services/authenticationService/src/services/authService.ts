@@ -62,6 +62,19 @@ export async function createAccount(_email: string, _username: string, _password
   }
 }
 
+export async function getAccountPublicById(id: string) {
+  return prisma.account.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      userType: true,
+      isActive: true,
+    },
+  });
+}
+
 export async function findAccountById(id: string) {
   return prisma.account.findUnique({ where: { id } });
 }
