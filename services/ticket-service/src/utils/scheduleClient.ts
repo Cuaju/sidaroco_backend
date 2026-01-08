@@ -33,20 +33,33 @@ export async function scheduleGetTripsInRange(
 ): Promise<ScheduleTrip[]> {
   const baseUrl = process.env.SCHEDULE_SERVICE_URL;
   if (!baseUrl) throw new Error("SCHEDULE_SERVICE_URL is missing");
-
-  const url = `${baseUrl}/schedule/trips/ids?from=${toLocalDateString(from)}&to=${toLocalDateString(to)}`;
-
+  
+  const fromStr = toLocalDateString(from);
+  const toStr = toLocalDateString(to);
+  
+  const url = `${baseUrl}/schedule/trips/ids?from=${fromStr}&to=${toStr}`;
+  
+  console.log("Schedule Client - Request:", { 
+    url, 
+    from: fromStr, 
+    to: toStr,
+    fromDate: from.toString(),
+    toDate: to.toString()
+  });
+  
   const res = await fetch(url, {
     headers: { Authorization: authHeader },
   });
-
+  
   if (!res.ok) {
     const errorText = await res.text().catch(() => "Unknown error");
     console.error("SCHEDULE_SERVICE_ERROR:", res.status, errorText);
     throw new Error(`scheduleGetTripsInRange failed: ${res.status}`);
   }
-
+  
   const data = await res.json();
+  console.log("Schedule Client - Response:", data.length, "trips");
+  
   return data as ScheduleTrip[];
 }
 

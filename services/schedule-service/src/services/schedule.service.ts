@@ -286,12 +286,23 @@ export async function getTripIdsInRange(
     serviceDate: string;
   }[]
 > {
+  const fromDate = new Date(from);
+  fromDate.setHours(0, 0, 0, 0);
+  
+  const toDate = new Date(to);
+  toDate.setHours(23, 59, 59, 999);
+
+  console.log("Schedule Service - Adjusted range:", { 
+    from: fromDate.toISOString(), 
+    to: toDate.toISOString() 
+  });
+
   const trips = await prisma.scheduledTrip.findMany({
     where: {
       dailySchedule: {
         serviceDate: {
-          gte: from,
-          lte: to,
+          gte: fromDate,
+          lte: toDate,
         },
       },
     },
@@ -308,6 +319,15 @@ export async function getTripIdsInRange(
       dailySchedule: { serviceDate: "asc" },
     },
   });
+
+  console.log("Schedule Service - Trips found:", trips.length);
+  if (trips.length > 0) {
+    console.log("Sample trips:", trips.slice(0, 2).map(t => ({
+      id: t.id,
+      routeId: t.routeId,
+      serviceDate: t.dailySchedule.serviceDate
+    })));
+  }
 
   return trips.map(t => ({
     tripId: t.id,
