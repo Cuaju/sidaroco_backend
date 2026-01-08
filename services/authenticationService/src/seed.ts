@@ -5,8 +5,12 @@ import { UserType } from "@prisma/client";
 
 // run: pnpm exec ts-node src/seed.ts
 async function main() {
-  const defaultPassword = "123456"; // change later
-  const passwordHash = await hashPassword(defaultPassword);
+  const passwords = [
+    "RouteManager7#",
+    "Customer2026!",
+    "FinanceManager3$",
+    "Cashier9*Pass",
+  ];
 
   const seedAccounts = [
     {
@@ -30,46 +34,48 @@ async function main() {
       userType: UserType.Cashier,
     },
   ];
+for (let i = 0; i < seedAccounts.length; i++) {
+    const account = seedAccounts[i];
+    const passwordHash = await hashPassword(passwords[i]);
 
-for (const a of seedAccounts) {
-  const existing = await prisma.account.findFirst({
-    where: { OR: [{ email: a.email }, { username: a.username }] },
-    select: { id: true },
-  });
+    const existing = await prisma.account.findFirst({
+      where: { OR: [{ email: account.email }, { username: account.username }] },
+      select: { id: true },
+    });
 
-  const created = existing
-    ? await prisma.account.update({
-        where: { id: existing.id },
-        data: {
-          email: a.email,
-          username: a.username,
-          isActive: true,
-          userType: a.userType,
-          passwordHash,
-        },
-        select: { id: true, email: true, username: true, userType: true, isActive: true },
-      })
-    : await prisma.account.create({
-        data: {
-          email: a.email,
-          username: a.username,
-          isActive: true,
-          userType: a.userType,
-          passwordHash,
-        },
-        select: { id: true, email: true, username: true, userType: true, isActive: true },
-      });
+    const created = existing
+      ? await prisma.account.update({
+          where: { id: existing.id },
+          data: {
+            email: account.email,
+            username: account.username,
+            isActive: true,
+            userType: account.userType,
+            passwordHash,
+          },
+          select: { id: true, email: true, username: true, userType: true, isActive: true },
+        })
+      : await prisma.account.create({
+          data: {
+            email: account.email,
+            username: account.username,
+            isActive: true,
+            userType: account.userType,
+            passwordHash,
+          },
+          select: { id: true, email: true, username: true, userType: true, isActive: true },
+        });
 
-  console.log("Seeded:", created);
-}
+    console.log("Seeded:", created.email);
+    console.log("Password:", passwords[i]);
+  }
 
-  console.log("\n✅ Seed done.");
-  console.log(`Password for all seeded accounts: ${defaultPassword}`);
+  console.log("\nSeed done.");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    console.error("Seed failed:", e);
     process.exitCode = 1;
   })
   .finally(async () => {
