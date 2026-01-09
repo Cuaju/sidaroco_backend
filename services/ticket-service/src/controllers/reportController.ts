@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as ReportService from "../services/reportService";
-import { scheduleGetTripsInRange } from "../utils/scheduleClient";
+import { scheduleGetTripsInRange, scheduleGetTripsByIds } from "../utils/scheduleClient";
 
 function parseUTCDate(dateString: string): Date {
   return new Date(`${dateString}T00:00:00.000Z`);
@@ -38,7 +38,11 @@ export async function getDailyTicketReport(req: Request, res: Response) {
     const tickets = await ReportService.getTicketsInDateRange(start, end);
     console.log("Tickets found:", tickets.length);
 
-    const scheduleTrips = await scheduleGetTripsInRange(start, end, authHeader);
+    // Get unique trip IDs from tickets and fetch their route info
+    const tripIds = [...new Set(tickets.map((t) => t.tripId))];
+    console.log("Unique trip IDs:", tripIds);
+
+    const scheduleTrips = await scheduleGetTripsByIds(tripIds, authHeader);
     console.log("Schedule trips found:", scheduleTrips.length);
 
     const tripToRoute = new Map<number, number>();
@@ -99,7 +103,9 @@ export async function getMonthlyEarningsReport(req: Request, res: Response) {
 
     const tickets = await ReportService.getTicketsInDateRange(start, end);
 
-    const scheduleTrips = await scheduleGetTripsInRange(start, end, authHeader);
+    // Get unique trip IDs from tickets and fetch their route info
+    const tripIds = [...new Set(tickets.map((t) => t.tripId))];
+    const scheduleTrips = await scheduleGetTripsByIds(tripIds, authHeader);
 
     const tripToRoute = new Map<number, number>();
     for (const trip of scheduleTrips) {

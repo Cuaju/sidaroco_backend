@@ -95,6 +95,17 @@ export async function getTripById(id: number): Promise<ScheduledTrip | null> {
   });
 }
 
+export async function getTripsByIds(
+  ids: number[]
+): Promise<{ tripId: number; routeId: number }[]> {
+  const trips = await prisma.scheduledTrip.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, routeId: true },
+  });
+
+  return trips.map((t) => ({ tripId: t.id, routeId: t.routeId }));
+}
+
 export async function getTripsByScheduleId(dailyScheduleId: number): Promise<ScheduledTrip[]> {
   return prisma.scheduledTrip.findMany({
     where: { dailyScheduleId },

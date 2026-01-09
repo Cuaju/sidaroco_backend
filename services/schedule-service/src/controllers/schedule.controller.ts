@@ -113,6 +113,31 @@ export async function getTripById(req: Request, res: Response) {
   }
 }
 
+export async function getTripsByIds(req: Request, res: Response) {
+  try {
+    const { ids } = req.query;
+
+    if (!ids || typeof ids !== "string") {
+      return res.status(400).json({ message: "ids query parameter is required" });
+    }
+
+    const tripIds = ids
+      .split(",")
+      .map(Number)
+      .filter((n) => !isNaN(n));
+
+    if (tripIds.length === 0) {
+      return res.status(400).json({ message: "No valid trip IDs provided" });
+    }
+
+    const trips = await ScheduleService.getTripsByIds(tripIds);
+    res.status(200).json(trips);
+  } catch (error) {
+    console.error("Error fetching trips by IDs:", error);
+    res.status(500).json({ message: "Failed to fetch trips" });
+  }
+}
+
 export async function addTripToSchedule(req: Request, res: Response) {
   try {
     const {

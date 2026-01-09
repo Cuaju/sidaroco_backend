@@ -89,3 +89,27 @@ export async function scheduleGetDaySchedule(
   const data = await res.json();
   return data as ScheduleDay;
 }
+
+export async function scheduleGetTripsByIds(
+  tripIds: number[],
+  authHeader: string
+): Promise<{ tripId: number; routeId: number }[]> {
+  const baseUrl = process.env.SCHEDULE_SERVICE_URL;
+  if (!baseUrl) throw new Error("SCHEDULE_SERVICE_URL is missing");
+
+  if (tripIds.length === 0) return [];
+
+  const url = `${baseUrl}/schedule/trips/byIds?ids=${tripIds.join(",")}`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: authHeader },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    console.error("SCHEDULE_SERVICE_ERROR:", res.status, errorText);
+    throw new Error(`scheduleGetTripsByIds failed: ${res.status}`);
+  }
+
+  return res.json();
+}

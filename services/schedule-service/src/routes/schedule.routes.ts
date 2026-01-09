@@ -12,6 +12,9 @@ router.get("/range", Authorize({roles:["RouteManager", "FinanceManager", "Custom
 // An specific scheduled trip by ID
 router.get("/trip/:tripId", Authorize({roles:["RouteManager", "FinanceManager", "Customer", "Cashier"]}), ScheduleController.getTripById);
 
+// Get multiple trips by IDs
+router.get("/trips/byIds", Authorize({roles:["RouteManager", "FinanceManager", "Customer", "Cashier"]}), ScheduleController.getTripsByIds);
+
 // Create an empty schedule
 router.post("/",Authorize({roles:["RouteManager"]}), ScheduleController.createEmptySchedule);
 
