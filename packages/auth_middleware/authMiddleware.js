@@ -7,7 +7,6 @@ function Authorize(options = {}) {
   return (req, res, next) => {
     try {
       const authHeader = req.headers.authorization;
-      console.log(roles)
       
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ msg: 'Token Required' });
@@ -24,15 +23,10 @@ function Authorize(options = {}) {
       };
 
       if (roles && roles.length > 0) {
-        console.log("entró")
-        console.log(req.user.role)
-
         if (!roles.includes(req.user.role)) {
-          console.log("no tiene permiso")
           return res.status(403).json({ msg: 'Access Denied' });
         }
       }
-      console.log("validacion pasada")
 
       next();
     } catch (err) {

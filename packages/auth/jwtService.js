@@ -33,7 +33,7 @@ function generateToken({ id, email, username, role }) {
     PRIVATE_KEY,
     {
       algorithm: 'RS256',
-      expiresIn: '1h',
+      expiresIn: '2h',
       issuer: 'sidaroco',
       audience: 'sidarocoUsuarios'
     }
