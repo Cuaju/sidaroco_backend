@@ -2,9 +2,6 @@ import { DailySchedule, ScheduledTrip } from "../generated/prisma/client";
 import prisma from "../db/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DailySchedule CRUD
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function getScheduleByDate(date: Date): Promise<DailySchedule | null> {
   return prisma.dailySchedule.findUnique({
@@ -84,10 +81,6 @@ export async function unlockSchedule(id: number): Promise<DailySchedule> {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ScheduledTrip CRUD
-// ─────────────────────────────────────────────────────────────────────────────
-
 export async function createTrip(
   data: Omit<ScheduledTrip, "id" | "createdAt" | "updatedAt" | "status">
 ): Promise<ScheduledTrip> {
@@ -140,7 +133,6 @@ export async function addTripToSchedule(data: {
   driverId: number;
   departureTime: Date;
 }): Promise<ScheduledTrip> {
-  // Find or create the DailySchedule for this date
   let schedule = await prisma.dailySchedule.findUnique({
     where: { serviceDate: data.date },
   });
@@ -169,9 +161,7 @@ export async function addTripToSchedule(data: {
   });
 }
 
-/**
- * Duplicates an existing schedule to a new date.
- */
+
 export async function duplicateSchedule(
   sourceDate: Date,
   targetDate: Date
@@ -287,10 +277,10 @@ export async function getTripIdsInRange(
   }[]
 > {
   const fromDate = new Date(from);
-  fromDate.setHours(0, 0, 0, 0);
+  fromDate.setUTCHours(0, 0, 0, 0);
   
   const toDate = new Date(to);
-  toDate.setHours(23, 59, 59, 999);
+  toDate.setUTCHours(23, 59, 59, 999);
 
   console.log("Schedule Service - Adjusted range:", { 
     from: fromDate.toISOString(), 
