@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as TicketService from "../services/ticketService";
+import { sendTicketEmail } from "../utils/mailClient";
 import prisma from "../db/prisma";
 
 export async function createTicket(req: Request, res: Response) {
@@ -107,5 +108,27 @@ export async function deleteTicket(req: Request, res: Response) {
   } catch (error) {
     console.error("Error deleting ticket:", error);
     res.status(500).json({ message: "Failed to delete ticket" });
+  }
+}
+
+export async function sendTicketsEmail(req: Request, res: Response){
+  try{
+    const {to, routeName, travelDate, travelTime, tickets, passengerName, totalPrice} = req.body;
+
+    if(!to || typeof to !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){
+      return res.status(400).json({message: "Invalid email address"});
+    }
+
+    if (!to || !routeName || !travelDate || !travelTime || !tickets || !totalPrice) {
+      return res.status(400).json({message: "Missing required fields"});
+    }
+
+    await sendTicketEmail(to, {routeName, travelDate, travelTime, tickets, passengerName: passengerName || "Guest", totalPrice: totalPrice || 0});
+
+    return res.status(200).json({success: true, message: "Tickets email sent successfully"});
+
+  } catch (error: any) {
+    console.error("Error sending tickets email:", error);
+    res.status(500).json({message: error.message || "Failed to send tickets email"});
   }
 }

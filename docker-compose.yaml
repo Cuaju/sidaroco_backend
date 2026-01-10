@@ -107,6 +107,7 @@ services:
       DATABASE_URL: postgresql://sidaroco:sidaroco@postgres:5432/sidaroco_ticket
       AUTH_SERVICE_URL: http://authentication-service:3000
       CORS_DOMAIN: www.sidaroco.com
+      MAIL_SERVICE_URL: http://mail-service:3002
     depends_on:
       - postgres
     ports:

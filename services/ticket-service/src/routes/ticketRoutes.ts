@@ -16,6 +16,8 @@ router.put("/:id", Authorize({roles:["Cashier"]}), TicketController.updateTicket
 
 router.delete("/:id", Authorize({roles:["Customer", "Cashier"]}), TicketController.deleteTicket);
 
+router.post("/send-email", Authorize({roles:["Customer", "Cashier"]}), TicketController.sendTicketsEmail);
+
 router.options("/user/:userId", (_req, res) => {
   res.sendStatus(204);
 });
