@@ -8,7 +8,7 @@ router.post("/", Authorize({roles:["Customer", "Cashier"]}), TicketController.cr
 
 router.get("/", Authorize({roles:["Customer", "FinanceManager"]}), TicketController.getAllTickets);
 
-router.get("/user/:userId", Authorize({roles:["Customer"]}), TicketController.getTicketsByUser);
+router.get("/user/:userId", Authorize({roles:["Customer", "Cashier"]}), TicketController.getTicketsByUser);
 
 router.get("/:id", Authorize({roles:["Customer", "FinanceManager"]}), TicketController.getTicketById);
 
