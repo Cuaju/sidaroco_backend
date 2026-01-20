@@ -23,3 +23,22 @@ export async function getTicketsByTripIds(tripIds: number[], from: Date, to: Dat
     },
   });
 }
+
+export async function getTicketsByUsersInDateRange(
+  userIds: string[],
+  from: Date,
+  to: Date
+) {
+  if (userIds.length === 0) return [];
+
+  return prisma.ticket.findMany({
+    where: {
+      userId: { in: userIds },
+      saleDate: { gte: from, lte: to },
+    },
+    select: {
+      userId: true,
+      price: true,
+    },
+  });
+}

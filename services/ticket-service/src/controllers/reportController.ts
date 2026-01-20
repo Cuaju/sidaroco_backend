@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import * as ReportService from "../services/reportService";
 import { scheduleGetTripsInRange, scheduleGetTripsByIds } from "../utils/scheduleClient";
 
+const usersBaseUrl =
+  process.env.USERS_SERVICE_URL || "http://localhost:3005";
+  
 function parseUTCDate(dateString: string): Date {
   return new Date(`${dateString}T00:00:00.000Z`);
 }
@@ -190,3 +193,106 @@ export async function getMonthlyRouteReport(req: Request, res: Response) {
     });
   }
 }
+
+type CashierAccount = {
+  id: string;
+  fullName: string;
+};
+
+type UsersResponse = {
+  accounts: {
+    id: string;
+    userType: string;
+    profile?: {
+      fullName?: string;
+    };
+  }[];
+};
+
+export async function getMonthlyCashierSummary(req: Request, res: Response) {
+  try {
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({ message: "Year and month required" });
+    }
+
+    const authHeader = req.header("authorization");
+    if (!authHeader) {
+      return res.status(401).json({ message: "Authorization header required" });
+    }
+
+    const y = Number(year);
+    const m = Number(month);
+
+    const start = new Date(y, m - 1, 1);
+    const end = new Date(y, m, 0, 23, 59, 59, 999);
+
+    const usersResponse = await fetch(
+      `${usersBaseUrl}/api/users/admin/accounts`,
+      {
+        headers: {
+          authorization: authHeader,
+        },
+      }
+    );
+
+    if (!usersResponse.ok) {
+      return res.status(502).json({ message: "Users service error" });
+    }
+
+    const usersData: UsersResponse = await usersResponse.json();
+
+    const cashiers: CashierAccount[] = usersData.accounts
+      .filter((a) => a.userType === "Cashier")
+      .map((a) => ({
+        id: a.id,
+        fullName: a.profile?.fullName ?? "Unknown",
+      }));
+
+    const cashierIds: string[] = cashiers.map((c) => c.id);
+
+    const tickets = await ReportService.getTicketsByUsersInDateRange(
+      cashierIds,
+      start,
+      end
+    );
+
+    const result = new Map<
+      string,
+      { cashierId: string; fullName: string; tickets: number; total: number }
+    >();
+
+    for (const t of tickets) {
+      const cashier = cashiers.find((c) => c.id === t.userId);
+      if (!cashier) continue;
+
+      if (!result.has(cashier.id)) {
+        result.set(cashier.id, {
+          cashierId: cashier.id,
+          fullName: cashier.fullName,
+          tickets: 0,
+          total: 0,
+        });
+      }
+
+      const acc = result.get(cashier.id)!;
+      acc.tickets += 1;
+      acc.total += t.price;
+    }
+
+    res.json({
+      year: y,
+      month: m,
+      cashiers: Array.from(result.values()),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to generate cashier report",
+    });
+  }
+}
+
