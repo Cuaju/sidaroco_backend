@@ -1,13 +1,11 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import ticketRoutes from "./routes/ticketRoutes";
 import reportRoutes from "./routes/reportRoutes";
 import tripRoutes from "./routes/tripRoutes";
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
 app.use("/tickets", ticketRoutes);
