@@ -108,6 +108,7 @@ services:
       AUTH_SERVICE_URL: http://authentication-service:3000
       CORS_DOMAIN: www.sidaroco.com
       MAIL_SERVICE_URL: http://mail-service:3002
+      USERS_SERVICE_URL: http://users-service:3005
     depends_on:
       - postgres
     ports:

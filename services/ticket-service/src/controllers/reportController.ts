@@ -305,12 +305,12 @@ export async function getDailyCashierCut(req: Request, res: Response) {
       };
 
       for (const ticket of cashierTickets) {
-        if (ticket.paymentMethod === "CASH") {
+        if (ticket.paymentMethod === "cash") {
           cashData.tickets += 1;
           cashData.total += ticket.price;
           cashData.amountReceived += ticket.amountReceived ?? ticket.price;
           cashData.changeGiven += ticket.changeGiven ?? 0;
-        } else if (ticket.paymentMethod === "CARD") {
+        } else if (ticket.paymentMethod === "card") {
           cardData.tickets += 1;
           cardData.total += ticket.price;
           cardData.transactions.push({
