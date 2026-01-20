@@ -2,6 +2,46 @@ import  {Request, Response} from "express";
 import { uploadToS3, getSignedUrlForKey } from "../utils/s3";
 import * as DriverService from "../services/driver.service";
 
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://authentication-service:3000";
+
+function generateDriverEmail(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '') + "@sidaroco.com";
+}
+
+function generateDriverPassword(licenseNumber: string): string {
+  return licenseNumber + "$";
+}
+
+async function createDriverAccount(name: string, licenseNumber: string): Promise<{ accountId: string } | null> {
+  const email = generateDriverEmail(name);
+  const username = name.toLowerCase().replace(/\s+/g, '_');
+  const password = generateDriverPassword(licenseNumber);
+
+  try {
+    const response = await fetch(`${AUTH_SERVICE_URL}/internal/newAccount`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        newEmail: email,
+        newUsername: username,
+        newPassword: password,
+        userType: "Driver"
+      })
+    });
+
+    if (response.status === 201) {
+      const data = await response.json();
+      return { accountId: data.accountId };
+    }
+    
+    console.error("Failed to create driver account:", await response.text());
+    return null;
+  } catch (error) {
+    console.error("Error calling auth service:", error);
+    return null;
+  }
+}
+
 export async function createDriver(req:Request, res:Response) {
 
     try{
@@ -11,6 +51,12 @@ export async function createDriver(req:Request, res:Response) {
             photoKey = await uploadToS3(req.file, "drivers");
         }
 
+        // Create driver account first
+        const accountResult = await createDriverAccount(req.body.name, req.body.licenseNumber);
+        
+        if (!accountResult) {
+          return res.status(500).json({ message: "Failed to create driver account" });
+        }
 
         const driverData = {
             name: req.body.name,
@@ -18,7 +64,8 @@ export async function createDriver(req:Request, res:Response) {
             birdthDate: new Date(req.body.birdthDate),
             address: req.body.address,
             status: req.body.status,
-            photoKey: photoKey
+            photoKey: photoKey,
+            accountId: accountResult.accountId
         }
 
         const newDriver = await DriverService.createDriver(driverData);
@@ -45,6 +92,22 @@ export async function getDriverById(req: Request, res: Response) {
     res.json(driver);
   } catch (error) {
     console.error("Error getting driver:", error);
+    res.status(500).json({ message: "Failed to get driver" });
+  }
+}
+
+export async function getDriverByAccountId(req: Request, res: Response) {
+  try {
+    const accountId = req.params.accountId;
+    const driver = await DriverService.getDriverByAccountId(accountId);
+
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found for this account" });
+    }
+
+    res.json({ id: driver.id, name: driver.name });
+  } catch (error) {
+    console.error("Error getting driver by accountId:", error);
     res.status(500).json({ message: "Failed to get driver" });
   }
 }

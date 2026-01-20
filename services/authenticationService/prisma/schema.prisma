@@ -11,6 +11,7 @@ enum UserType {
   Customer
   FinanceManager
   Cashier
+  Driver
 }
 
 model Account {

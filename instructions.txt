@@ -1,0 +1,162 @@
+Agregar nuevo modulo de chofer, para esto se ocupa un modulo de "chofer", que pueda ver las corridas que tuve asignadas, y sacar la lista de pasajeros de esa corrida. (las de schedule, el trip pues).
+
+esto requiere de un nuevo rol llamado "DRIVER".
+Lo que creo que si tiene que tener es: un tipo "separador" entre upcoming y past trips; estuviera bien que hubiera un rango de fechas pasadas, tipo un calendario o algo donde veas "del dia x, hasta el dia y", y en los upcoming que por defecto este el dia de "hoy", pero tambien tenga un tipo selector de rango de fechas en un futuro, de "del dia n hasta el dia m" pero en futuro.
+
+quiero que ahora mismo me ayudes a planear como modificar el backend para cumplir las expectativas del modelo del frontend.
+
+te voy a dar lo que "quiere" mas o menos el front para que tu ME DIGAS que pedo, no quiero que cambies codigo aun.
+
+Frontend (cómo se vería y cómo se usa)
+
+Entrada del chofer (“Mis corridas”): una vista principal con 2 pestañas o un “segmented control”:
+Próximas (upcoming)
+Pasadas (past)
+Separador claro + filtros por rango:
+Próximas: por defecto “Hoy” (rango = hoy 00:00 → hoy 23:59), con un selector de rango futuro “Del día N al día M”.
+Pasadas: selector de rango pasado “Del día X al día Y” (con límites razonables, p. ej. máximo 30/60/90 días atrás, configurable).
+Ideal: un date-range picker + atajos rápidos: “Hoy”, “Mañana”, “Esta semana”, “Últimos 7 días”, “Últimos 30 días”.
+Listado de corridas (cards):
+Cada card muestra lo mínimo para decidir rápido: ruta, hora salida, hora llegada estimada, origen → destino, unidad/autobús, estado (pendiente/en curso/finalizada/cancelada), cantidad de pasajeros (si está disponible).
+Acciones:
+Ver pasajeros (abre detalle / modal / pantalla secundaria).
+Opcional: Iniciar/Finalizar corrida (solo si tu operación lo necesita; si no, se omite).
+Detalle de corrida (manifest / lista de pasajeros):
+Encabezado con datos operativos: ruta, horario, unidad, chofer asignado, fecha.
+Tabla/lista de pasajeros con: nombre, asiento, folio/boleto, parada de subida/bajada (si aplica), estatus del boleto (pagado/cancelado).
+Búsqueda rápida dentro de la lista (por nombre, asiento, folio).
+Opcional muy útil: botón Imprimir / Exportar PDF (ya tienen builders de PDF en el proyecto; se puede reutilizar la idea).
+Cómo abordaría el problema en el frontend (arquitectura y trabajo por fases)
+
+Rol y navegación
+
+Agregar un nuevo rol DRIVER en el frontend (mapeo de roles).
+Crear un layout mínimo para chofer (similar a los otros layouts): menú con “Mis corridas” y “Perfil” (si existe).
+Proteger rutas: si el usuario no es DRIVER, no entra.
+Pantalla “Mis corridas”
+
+Reusar componentes existentes donde convenga:
+Para el listado: se puede adaptar el componente de cards de trips/corridas que ya usan (misma estética).
+Para fechas: reusar o inspirarse en el calendario existente (si ya está integrado y es cómodo).
+Lógica de filtros:
+Estado local: tab = upcoming|past, dateRange.
+Cada cambio de filtro dispara fetch con debounce (o botón “Aplicar” si prefieren menos llamadas).
+Detalle y manifiesto
+
+Navegación: al tocar una corrida → vista “Detalle de corrida” con el manifiesto.
+Carga incremental: primero datos de la corrida, luego pasajeros (o ambos en una sola llamada si es más simple).
+Considerar paginación si hay corridas con muchos pasajeros.
+Calidad de vida
+
+Estados vacíos bien definidos: “No hay corridas en este rango”.
+Loading skeletons.
+Manejo de errores claro: “No se pudo cargar, reintentar”.
+Backend (qué necesitaría para que esto funcione bien)
+1) Autenticación + autorización (rol DRIVER)
+
+Incluir el rol DRIVER en el sistema de identidad.
+El token (JWT o similar) debe traer role=DRIVER y el userId (o driverId) para filtrar “solo mis corridas”.
+Reglas:
+DRIVER solo puede ver corridas asignadas a él.
+DRIVER solo puede ver lista de pasajeros de esas corridas.
+2) Modelo mínimo de datos / relaciones (conceptualmente)
+
+Necesitas una relación clara: Trip/ScheduleAssignment → Driver.
+Ejemplo conceptual: Trip { id, routeId, busId, driverId, departureDateTime, status, ... }
+Y otra: Ticket/Passenger → Trip (o por schedule instance).
+Ticket { id, tripId, passengerName, seatNumber, status, ... }
+3) Endpoints necesarios (mínimos)
+
+Listar mis corridas por rango
+
+GET /driver/trips?from=YYYY-MM-DD&to=YYYY-MM-DD&status=upcoming|past
+Respuesta: lista de trips con campos necesarios para las cards (route/origen-destino/horas/bus/status/paxCount opcional).
+Recomendación: soportar timezone o definir zona horaria fija para evitar corridas “cambiando de día”.
+Obtener detalle de una corrida (validando ownership)
+
+GET /driver/trips/{tripId}
+Devuelve datos completos del trip.
+Obtener manifiesto / pasajeros de una corrida
+
+GET /driver/trips/{tripId}/passengers
+Devuelve lista con: nombre, asiento, folio/ticketId, estatus, origen/destino (si aplica).
+4) Consideraciones importantes
+
+Definición de “upcoming” vs “past”:
+Upcoming: departureDateTime >= now
+Past: departureDateTime < now (o por status=FINISHED)
+Lo ideal es combinar ambas: fecha + estatus, porque puede haber corridas pasadas no finalizadas por operación.
+Performance:
+Si piden “pasajeros” seguido, conviene paxCount precalculado o agregación rápida.
+Seguridad:
+Cada endpoint debe validar que trip.driverId == token.userId/driverId (no confiar en el cliente).
+Formato de datos
+Estandarizar: ISO 8601 para fechas (2026-01-19T08:30:00-06:00).
+Entregable sugerido (lo más directo y usable)
+Vista “Mis corridas” (tabs + date-range + cards).
+Vista “Pasajeros de corrida” (tabla + búsqueda + imprimir/exportar opcional).
+Backend con 2–3 endpoints específicos para DRIVER, filtrando por el usuario autenticado.
+Si me dices cómo están modeladas hoy las “corridas” (si vienen de schedule, de trips, o de ambos) y cómo se asigna el chofer (en trip, en schedule, o en otra tabla), te propongo el diseño exacto de endpoints y el contrato de respuesta para que el frontend quede plug-and-play.
+
+---
+Voy a revisar cómo el proyecto está manejando fechas/horas (timezone, formatos y parsing) en scheduleApi, TripCard/TripForm y cualquier util existente, para proponerte una implementación de “Mis corridas” que sea consistente y no se rompa por zona horaria.
+
+Searched for regex and refined date handling
+Lo de “las horas” en tu proyecto ahorita es MUY particular: en varias partes no están usando la hora “local del navegador”, sino una mezcla de (a) “hoy” calculado explícitamente en America/Mexico_City y (b) horas de los trips interpretadas como UTC para extraer HH:mm.
+
+Qué está pasando hoy (y por qué importa para DRIVER)
+
+En scheduleView.vue ustedes deciden “día pasado vs no pasado” comparando strings YYYY-MM-DD, pero el “hoy” lo calculan en Mexico:
+Construyen todayStr usando new Date().toLocaleString(... timeZone: "America/Mexico_City").
+Para mostrar la fecha bonita usan new Date(selectedDate + "T12:00:00") (eso es un truco para evitar que el timezone te cambie el día al formatear).
+En tripForm.vue la validación “no permitir horas en el pasado” también está basada en hora actual en Mexico y comparación de strings "HH:mm":
+form.departureTime < currentTime (string compare) funciona porque el formato es HH:mm.
+En tripCard.vue la hora del trip se muestra usando UTC:
+const d = new Date(dateStr); d.getUTCHours()/getUTCMinutes()
+Eso sugiere que trip.departureTime NO es un HH:mm plano al render, sino un string parseable por new Date(...) (normalmente ISO), donde ustedes tratan su “hora” como UTC para sacar el “time-of-day”.
+Conclusión clave: para el módulo de DRIVER, si usas new Date(trip.departureTime) “normal” y .getHours() (local), te va a empezar a bailar la hora dependiendo del timezone del dispositivo. Para ser consistente, hay que seguir su convención: hora del trip = UTCHours/UTCMinutes y “hoy/ahora” = reloj de Mexico_City.
+
+Cómo implementaría “upcoming vs past” SIN romper horas (recomendación concreta)
+Evitaría comparar Date objects para “past/upcoming” y lo haría como ustedes ya lo hacen en otras partes: comparación lexicográfica de strings ISO.
+
+Definir “ahora” en Mexico como key:
+todayMX = "YYYY-MM-DD" (como ya lo hacen)
+nowMX = "HH:mm" (como ya lo hacen)
+nowKey = todayMX + "T" + nowMX
+Para cada trip, construir tripKey usando:
+serviceDate = trip.serviceDate.split("T")[0] o el día del schedule (igual que en scheduleCalendar.vue cuando hace item.serviceDate?.split("T")[0])
+tripTimeHHmm obtenido de trip.departureTime como en TripCard/TripForm:
+parseas new Date(trip.departureTime) y tomas getUTCHours/getUTCMinutes
+armas "HH:mm"
+tripKey = serviceDate + "T" + tripTimeHHmm
+Regla:
+Upcoming si tripKey >= nowKey
+Past si tripKey < nowKey
+Esto queda 100% alineado con su código actual (y evita el infierno de timezones/DST en JS).
+
+Ojo: inconsistencia potencial en el calendario
+En scheduleCalendar.vue today se toma como new Date() (timezone local del navegador) y isToday usa esa comparación local. En scheduleView.vue “hoy” se calcula en Mexico_City.
+
+Si alguien abre el sistema desde otro huso horario (o una PC mal configurada), el calendario podría marcar “today” distinto a lo que el resto de la lógica considera “hoy”. Para DRIVER yo me iría con el enfoque de todayMXStr sí o sí (como ScheduleView/TripForm).
+
+Qué le pediría al backend para DRIVER (para que esto salga limpio)
+Mínimo, para que el frontend no adivine:
+
+Cada corrida/trip debe traer dos cosas separadas:
+serviceDate (día de operación) como YYYY-MM-DD o ISO pero siempre parseable + fácil de recortar a día.
+departureTime en el MISMO formato que ya usan hoy (parseable por new Date(...) y consistente con el uso de UTC para HH:mm), o alternativamente un departureTimeHHmm: "HH:mm" directo.
+Endpoints sugeridos (en forma de contrato, no importa el path exacto):
+
+GET /driver/trips?from=YYYY-MM-DD&to=YYYY-MM-DD → lista de trips asignados al chofer, cada uno con serviceDate, departureTime, route, bus, status, tripId.
+GET /driver/trips/{tripId}/passengers → manifiesto / pasajeros.
+Mejor aún (si quieres blindarte): que el backend ya te regrese un campo listo para comparar/ordenar, ejemplo:
+
+departureKey: "YYYY-MM-DDTHH:mm" (en hora local de Mexico)
+o
+departureDateTime: "2026-01-19T08:30:00-06:00" (ISO con offset)
+Así el frontend solo filtra/sorta sin heurísticas.
+
+Si quieres, en el siguiente paso ya te dibujo el flujo exacto del “DriverTripsView” (tabs + rango) usando estas reglas de tripKey/nowKey, y te digo exactamente qué campos debe regresar cada card para que no haya ambigüedad con horas.
+
+
+ME DIJO ESTO, pero como repito, tu tienes autoridad

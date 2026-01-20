@@ -11,7 +11,7 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-const allowedUserTypes = ["RouteManager", "Customer", "FinanceManager", "Cashier"] as const;
+const allowedUserTypes = ["RouteManager", "Customer", "FinanceManager", "Cashier", "Driver"] as const;
 const allowedAdminUserTypes = ["RouteManager", "FinanceManager", "Cashier"] as const;
 
 type AllowedUserType = (typeof allowedUserTypes)[number];
@@ -72,10 +72,11 @@ export async function createNewAccountHashed(req: Request, res: Response) {
 
 //POST /internal/newAccount
 export async function createNewAccount(req: Request, res:Response) {
-  const {newEmail, newUsername, newPassword } = req.body as {
+  const {newEmail, newUsername, newPassword, userType } = req.body as {
     newEmail:string;
     newUsername:string;
     newPassword:string;
+    userType?:string;
   }
   
   if ( newEmail !== undefined){
@@ -96,10 +97,19 @@ export async function createNewAccount(req: Request, res:Response) {
     }
   }
 
+  // Validate userType if provided
+  let prismaUserType: UserType = UserType.Customer;
+  if (userType !== undefined) {
+    if (!isAllowedUserType(userType)) {
+      return res.status(400).json({ message: "invalid userType" });
+    }
+    prismaUserType = userType as UserType;
+  }
+
   const newHashedPasword = await hashPassword(newPassword)
   
   try{
-    const account = await createAccount(newEmail, newUsername, newHashedPasword)
+    const account = await createAccount(newEmail, newUsername, newHashedPasword, prismaUserType)
     return res.status(201).json({accountId: account.id})
   }
   catch (e: any) {

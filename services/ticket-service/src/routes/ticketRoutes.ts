@@ -10,6 +10,8 @@ router.get("/", Authorize({roles:["Customer", "FinanceManager"]}), TicketControl
 
 router.get("/user/:userId", Authorize({roles:["Customer", "Cashier"]}), TicketController.getTicketsByUser);
 
+router.get("/trip/:tripId", Authorize({roles:["Driver", "RouteManager", "FinanceManager"]}), TicketController.getTicketsByTrip);
+
 router.get("/:id", Authorize({roles:["Customer", "FinanceManager"]}), TicketController.getTicketById);
 
 router.put("/:id", Authorize({roles:["Cashier"]}), TicketController.updateTicket);

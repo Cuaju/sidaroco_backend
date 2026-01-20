@@ -79,6 +79,22 @@ export async function getAllTickets(req: Request, res: Response) {
   }
 }
 
+export async function getTicketsByTrip(req: Request, res: Response) {
+  try {
+    const tripId = Number(req.params.tripId);
+    
+    if (isNaN(tripId)) {
+      return res.status(400).json({ message: "Invalid tripId" });
+    }
+
+    const tickets = await TicketService.getTicketsByTripId(tripId);
+    res.json(tickets);
+  } catch (error) {
+    console.error("Error getting tickets by trip:", error);
+    res.status(500).json({ message: "Failed to get tickets" });
+  }
+}
+
 export async function updateTicket(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);

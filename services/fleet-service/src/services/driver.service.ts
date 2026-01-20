@@ -15,6 +15,13 @@ export async function getDriverById(id:number): Promise<Driver | null> {
     return driver;
 }
 
+export async function getDriverByAccountId(accountId: string): Promise<Driver | null> {
+    const driver = await prisma.driver.findFirst({
+        where: { accountId }
+    });
+    return driver;
+}
+
 export async function getAllDrivers(): Promise<Driver[]> {
     const drivers = await prisma.driver.findMany();
     return drivers;

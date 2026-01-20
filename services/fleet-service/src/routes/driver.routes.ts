@@ -8,6 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 
 router.post("/",Authorize({roles:["RouteManager"]}), upload.single("photo"), DriverController.createDriver);
+router.get("/byAccount/:accountId", Authorize({roles:["Driver", "RouteManager"]}), DriverController.getDriverByAccountId);
 router.get("/:id",Authorize({roles:["RouteManager"]}), DriverController.getDriverById);
 router.get("/",Authorize({roles:["RouteManager"]}), DriverController.getAllDrivers);
 router.put("/:id",Authorize({roles:["RouteManager"]}), upload.single("photo"), DriverController.updateDriver);

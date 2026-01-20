@@ -19,6 +19,13 @@ export async function getAllTickets(): Promise<Ticket[]> {
   return prisma.ticket.findMany();
 }
 
+export async function getTicketsByTripId(tripId: number): Promise<Ticket[]> {
+  return prisma.ticket.findMany({ 
+    where: { tripId },
+    orderBy: { seatNumber: "asc" }
+  });
+}
+
 export async function updateTicket(
   id: number,
   data: Partial<Omit<Ticket, "id">>
