@@ -6,7 +6,7 @@ const TICKET_SERVICE_URL = process.env.TICKET_SERVICE_URL || "http://ticket-serv
 
 interface AuthenticatedRequest extends Request {
   user?: {
-    id: string; // accountId from JWT
+    id: string;
     email: string;
     username: string;
     role: string;
@@ -25,7 +25,6 @@ interface TicketDTO {
   paymentMethod: string | null;
 }
 
-// Get driverId from accountId by calling fleet-service
 async function getDriverIdFromAccountId(
   accountId: string,
   authHeader: string | undefined
@@ -47,7 +46,6 @@ async function getDriverIdFromAccountId(
   }
 }
 
-// GET /driver/trips?from=YYYY-MM-DD&to=YYYY-MM-DD
 export async function getMyTrips(req: AuthenticatedRequest, res: Response) {
   try {
     const accountId = req.user?.id;
@@ -68,7 +66,6 @@ export async function getMyTrips(req: AuthenticatedRequest, res: Response) {
       return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
     }
 
-    // Get driverId from accountId
     const driverId = await getDriverIdFromAccountId(accountId, req.header("authorization"));
     
     if (!driverId) {
@@ -84,7 +81,6 @@ export async function getMyTrips(req: AuthenticatedRequest, res: Response) {
   }
 }
 
-// GET /driver/trips/:tripId
 export async function getTripDetail(req: AuthenticatedRequest, res: Response) {
   try {
     const accountId = req.user?.id;
@@ -116,7 +112,6 @@ export async function getTripDetail(req: AuthenticatedRequest, res: Response) {
   }
 }
 
-// GET /driver/trips/:tripId/passengers
 export async function getTripPassengers(req: AuthenticatedRequest, res: Response) {
   try {
     const accountId = req.user?.id;
@@ -135,14 +130,12 @@ export async function getTripPassengers(req: AuthenticatedRequest, res: Response
       return res.status(404).json({ message: "Driver profile not found for this account" });
     }
 
-    // Verify the driver owns this trip
     const isOwner = await DriverService.verifyTripOwnership(tripId, driverId);
     
     if (!isOwner) {
       return res.status(403).json({ message: "This trip is not assigned to you" });
     }
 
-    // Fetch tickets from ticket-service
     const authHeader = req.header("authorization");
     const response = await fetch(`${TICKET_SERVICE_URL}/tickets/trip/${tripId}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
@@ -155,7 +148,6 @@ export async function getTripPassengers(req: AuthenticatedRequest, res: Response
 
     const tickets: TicketDTO[] = await response.json();
 
-    // Map to passenger-friendly response
     const passengers = tickets.map((ticket) => ({
       ticketId: ticket.id,
       passengerName: ticket.passengerName || "Sin nombre",

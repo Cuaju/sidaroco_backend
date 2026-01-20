@@ -2,9 +2,9 @@ import prisma from "../db/prisma";
 
 export interface DriverTrip {
   id: number;
-  serviceDate: string; // YYYY-MM-DD
-  departureTimeHHmm: string; // HH:mm
-  departureKey: string; // YYYY-MM-DDTHH:mm for easy sorting
+  serviceDate: string;
+  departureTimeHHmm: string;
+  departureKey: string;
   routeId: number;
   busId: number;
   driverId: number;

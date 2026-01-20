@@ -18,7 +18,7 @@ async function createDriverAccount(name: string, licenseNumber: string): Promise
   const password = generateDriverPassword(licenseNumber);
 
   try {
-    const response = await fetch(`${AUTH_SERVICE_URL}/internal/newAccount`, {
+    const response = await fetch(`${AUTH_SERVICE_URL}/api/internal/newAccount`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

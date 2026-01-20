@@ -560,7 +560,6 @@ export async function getTripIdsInRange(req: Request, res: Response) {
       });
     }
 
-    // Construir fechas UTC medianoche
     const fromDate = parseUTCDate(from as string);
     const toDate = parseUTCDate(to as string);
 

@@ -9,6 +9,7 @@ const mockDriver = {
   address: "123 Test Street",
   status: "available",
   photoKey: "",
+  accountId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -23,6 +24,7 @@ describe("Driver Service", () => {
         address: "123 Test Street",
         status: "available",
         photoKey: "",
+        accountId: null,
       };
 
       prismaMock.driver.create.mockResolvedValue(mockDriver);
@@ -46,6 +48,7 @@ describe("Driver Service", () => {
           address: "Test",
           status: "available",
           photoKey: "",
+          accountId: null,
         })
       ).rejects.toThrow("Unique constraint failed");
     });

@@ -1,9 +1,11 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import driverRoutes from "./routes/driver.routes";
 import busRoutes from "./routes/bus.routes";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.use("/drivers", driverRoutes);

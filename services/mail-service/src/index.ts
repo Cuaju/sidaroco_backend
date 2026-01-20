@@ -1,9 +1,11 @@
 import 'dotenv/config'
 import express from 'express'
+import cors from 'cors'
 import mailRoutes from './routes/mail.routes'
 
 
 const app = express()
+app.use(cors())
 app.use(express.json())
 
 app.use('/mail', mailRoutes)
