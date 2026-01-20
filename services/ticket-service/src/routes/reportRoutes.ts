@@ -8,5 +8,6 @@ router.get("/tickets/daily", Authorize({ roles: ["FinanceManager"] }), ReportCon
 router.get("/earnings/monthly", Authorize({ roles: ["FinanceManager"] }), ReportController.getMonthlyEarningsReport);
 router.get("/earnings/monthly/by-route", Authorize({ roles: ["FinanceManager"] }), ReportController.getMonthlyRouteReport);
 router.get("/earnings/monthly/by-cashier", Authorize({ roles: ["FinanceManager"] }), ReportController.getMonthlyCashierSummary);
+router.get("/cashier/daily-cut", Authorize({ roles: ["FinanceManager"] }), ReportController.getDailyCashierCut);
 
 export default router;

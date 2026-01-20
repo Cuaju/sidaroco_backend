@@ -17,6 +17,9 @@ model Ticket {
   saleDate   DateTime @map("sale_date")
   passengerName String?   @map("passenger_name")
   paymentMethod String?   @map("payment_method")
+  amountReceived Float?   @map("amount_received")
+  changeGiven    Float?   @map("change_given")
+  cardLast4      String?  @map("card_last4")
   
   createdAt  DateTime @map("created_at") @default(now())
   updatedAt  DateTime @map("updated_at") @updatedAt

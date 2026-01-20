@@ -42,3 +42,14 @@ export async function getTicketsByUsersInDateRange(
     },
   });
 }
+
+export async function getTicketsForDailyCut(userIds: string[], from: Date, to: Date) {
+  if (userIds.length === 0) return [];
+
+  return prisma.ticket.findMany({
+    where: {
+      userId: { in: userIds },
+      saleDate: { gte: from, lte: to },
+    },
+  });
+}

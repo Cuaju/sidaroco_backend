@@ -209,6 +209,143 @@ type UsersResponse = {
   }[];
 };
 
+type DailyCutTicket = {
+  id: number;
+  userId: string;
+  price: number;
+  paymentMethod: string | null;
+  amountReceived: number | null;
+  changeGiven: number | null;
+  cardLast4: string | null;
+};
+
+export async function getDailyCashierCut(req: Request, res: Response) {
+  try {
+    const { date } = req.query;
+
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+    }
+
+    const authHeader = req.header("authorization");
+    if (!authHeader) {
+      return res.status(401).json({ message: "Authorization header required" });
+    }
+
+    const d = parseUTCDate(date);
+    if (isNaN(d.getTime())) {
+      return res.status(400).json({ message: "Invalid date" });
+    }
+
+    const start = new Date(d);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(d);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const usersResponse = await fetch(`${usersBaseUrl}/api/users/admin/accounts`, {
+      headers: { authorization: authHeader },
+    });
+
+    if (!usersResponse.ok) {
+      return res.status(502).json({ message: "Users service error" });
+    }
+
+    const usersData: UsersResponse = await usersResponse.json();
+
+    const cashiers: CashierAccount[] = usersData.accounts
+      .filter((a) => a.userType === "Cashier")
+      .map((a) => ({
+        id: a.id,
+        fullName: a.profile?.fullName ?? "Unknown",
+      }));
+
+    const cashierIds = cashiers.map((c) => c.id);
+    const tickets = await ReportService.getTicketsForDailyCut(cashierIds, start, end) as unknown as DailyCutTicket[];
+
+    const result: {
+      cashierId: string;
+      cashierName: string;
+      totalTickets: number;
+      totalIncome: number;
+      byPaymentMethod: {
+        CASH?: {
+          tickets: number;
+          total: number;
+          amountReceived: number;
+          changeGiven: number;
+        };
+        CARD?: {
+          tickets: number;
+          total: number;
+          transactions: { ticketId: number; last4: string | null; amount: number }[];
+        };
+      };
+    }[] = [];
+
+    for (const cashier of cashiers) {
+      const cashierTickets = tickets.filter((t) => t.userId === cashier.id);
+      
+      if (cashierTickets.length === 0) continue;
+
+      const cashData = {
+        tickets: 0,
+        total: 0,
+        amountReceived: 0,
+        changeGiven: 0,
+      };
+
+      const cardData: {
+        tickets: number;
+        total: number;
+        transactions: { ticketId: number; last4: string | null; amount: number }[];
+      } = {
+        tickets: 0,
+        total: 0,
+        transactions: [],
+      };
+
+      for (const ticket of cashierTickets) {
+        if (ticket.paymentMethod === "CASH") {
+          cashData.tickets += 1;
+          cashData.total += ticket.price;
+          cashData.amountReceived += ticket.amountReceived ?? ticket.price;
+          cashData.changeGiven += ticket.changeGiven ?? 0;
+        } else if (ticket.paymentMethod === "CARD") {
+          cardData.tickets += 1;
+          cardData.total += ticket.price;
+          cardData.transactions.push({
+            ticketId: ticket.id,
+            last4: ticket.cardLast4,
+            amount: ticket.price,
+          });
+        }
+      }
+
+      const byPaymentMethod: typeof result[number]["byPaymentMethod"] = {};
+      if (cashData.tickets > 0) byPaymentMethod.CASH = cashData;
+      if (cardData.tickets > 0) byPaymentMethod.CARD = cardData;
+
+      result.push({
+        cashierId: cashier.id,
+        cashierName: cashier.fullName,
+        totalTickets: cashierTickets.length,
+        totalIncome: cashierTickets.reduce((sum, t) => sum + t.price, 0),
+        byPaymentMethod,
+      });
+    }
+
+    res.json({
+      date,
+      cashiers: result,
+    });
+  } catch (error) {
+    console.error("Error in getDailyCashierCut:", error);
+    res.status(500).json({
+      message: error instanceof Error ? error.message : "Failed to generate daily cut report",
+    });
+  }
+}
+
 export async function getMonthlyCashierSummary(req: Request, res: Response) {
   try {
     const { year, month } = req.query;
